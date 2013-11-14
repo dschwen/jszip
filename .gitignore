@@ -1,0 +1,6 @@
+*.bc
+*.o
+*~
+jzip.js
+jzip.html
+zork2.z3
