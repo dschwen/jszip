@@ -1,0 +1,45 @@
+option ProjectOptions = gen(arch, "x86"), gen(libansi, "yes"), gen(probe, "no"),
+                        gen(tiledmemory, "yes"),
+                        lang(level, "ansi"), lang(longlong, "no"),
+                        link(map, "Yes"),
+                        link(padding, "no"),
+                        opt(level, "2"), opt(tune, "pentium"),
+                        define("NDEBUG", ) {
+   option link(version, 2, 10), link(linkwithmultithreadlib, "yes"), link(stub, "qc\\JZIP.exe"), define("OS2", ), define("BUFFER_FILES", ) {
+      target type(exe) "JZIP.exe" {
+         source type("c") "jzip.c"
+         source type(c) "control.c"
+         source type(c) "extern.c"
+         source type(c) "fileio.c"
+         source type(c) "getopt.c"
+         source type(c) "input.c"
+         source type(c) "interpre.c"
+         source type(c) "license.c"
+         source type(c) "math.c"
+         source type(c) "memory.c"
+         source type(c) "object.c"
+         source type(c) "operand.c"
+         option lang(level, "extended") {
+            source type(c) "os2iob.c"
+         }
+         option gen(probe, "yes") {
+            source type(c) "os2iot.c"
+         }
+         source type(c) "osdepend.c"
+         source type(c) "property.c"
+         source type(c) "quetzal.c"
+         source type(c) "screen.c"
+         source type(c) "text.c"
+         source type(c) "variable.c"
+         source type(rc) "os2.rc"
+      }
+   }
+   option ipf_preopt("/i"), ipf_output("inf") {
+      source type(ipf) "JZIP.ipf"
+   }
+   option link(version, 1, 0), link(stub, "qc\\ckifzs.exe") {
+      target type(exe) "ckifzs.exe" {
+         source type(c) "ckifzs.c"
+      }
+   }
+}
