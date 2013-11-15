@@ -1,0 +1,77 @@
+<html>
+<head>
+<script src="http://code.jquery.com/jquery-1.10.1.min.js"></script>
+<style>
+#inputline {
+  position: relative;
+}
+#inputline>.prompt {
+  position: absolute;
+  top: 0; left: 0;
+}
+#inputline>input {
+  border: none;
+  width: 100%;
+  padding: 0 0 0 1.5em;
+  margin: 0;
+  background-color: #f8f8f8;
+}
+#inputline>input:focus {
+  background-color: #eee;
+  border: none;
+  outline: none;
+}
+div.output {
+  margin-bottom: 0.2em;
+}
+div.output, #inputline, #inputline>input {
+  font-family: serif;
+  font-size: 12pt;
+}
+
+</style>
+</head>
+<body>
+<div id="inputline">
+<input id="input" type="text">
+<span class="prompt"><b>&gt;</b></span>
+</span>
+<script>
+(function(){
+  var history = ['south','examine house','open door','west','lift rug']
+    , hindex = history.length
+    , $input = $('#input');
+
+  // hook key events up to input widget
+  $input.focus().keydown(function(e) { 
+    var v = $input.val();
+    console.log(e.keyCode);
+    switch(e.keyCode) {
+      case 38: // Cursor up
+        if (hindex>0) {
+          if(v!=='') { history[hindex] = v; }
+          $input.val(history[--hindex]);
+        }
+        e.preventDefault();
+        break;
+      case 40: // Cursor down
+        if(hindex<history.length) {
+          if (v!=='') { history[hindex] = v; }
+          $input.val(history[++hindex]);
+        }
+        e.preventDefault();
+        break;
+      case 13: // Enter 
+        if (v!=='') {
+          hindex = history.length;
+          history[hindex++] = v; 
+        }
+        $('#inputline').before($('<div class="output"></div>').text(v));
+        $input.val('');
+        break;
+    }
+  });
+})();
+</script>
+</body>
+</html>
