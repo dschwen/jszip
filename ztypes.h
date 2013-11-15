@@ -34,6 +34,10 @@
  *
  */
 
+#ifdef EMSCRIPTEN
+#define LOUSY_RANDOM
+#endif
+
 #if !defined(__ZTYPES_INCLUDED)
 #define __ZTYPES_INCLUDED
 
@@ -123,8 +127,9 @@ extern unsigned char JTERP;
  * which will return a meaningless value, and continuing on with
  * that.
  */
+#ifndef EMSCRIPTEN
 #define STRICTZ
-
+#endif
 
 /* Global defines */
 

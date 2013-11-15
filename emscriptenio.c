@@ -124,11 +124,13 @@ void display_char( int );
 
 /* done with editing prototypes */
 
+/*
 extern int tgetent(  );
 extern int tgetnum(  );
 extern char *tgetstr(  );
 extern char *tgoto(  );
 extern void tputs(  );
+*/
 
 void outc( int c )
 {
@@ -161,13 +163,13 @@ void initialize_screen(  )
    //GET_TC_STR( KL, "kl" );      /* sent by keypad left arrow                */
    //GET_TC_STR( KR, "kr" );      /* sent by keypad right arrow               */
 
-   if ( right_margin == 0 && tgetflag( "am" ) && !tgetflag( "xn" ) ) /* *JWK* */
+   //if ( right_margin == 0 && tgetflag( "am" ) && !tgetflag( "xn" ) ) /* *JWK* */
       right_margin = 1;         /* *JWK* */
 
-   if ( screen_cols == 0 && ( screen_cols = tgetnum( "co" ) ) == -1 )
+   //if ( screen_cols == 0 && ( screen_cols = tgetnum( "co" ) ) == -1 )
       screen_cols = DEFAULT_COLS;
 
-   if ( screen_rows == 0 && ( screen_rows = tgetnum( "li" ) ) == -1 )
+   //if ( screen_rows == 0 && ( screen_rows = tgetnum( "li" ) ) == -1 )
       screen_rows = DEFAULT_ROWS;
 
    if ( *KU == '\0' || *KD == '\0' || *KL == '\0' || *KR == '\0' )
@@ -187,7 +189,7 @@ void initialize_screen(  )
       UE = SE;
       US = SO;
    }
-   tputs( TI, 1, outc );
+   //tputs( TI, 1, outc );
 
    set_attribute( NORMAL );
 
@@ -267,6 +269,7 @@ void restart_screen(  )
 void reset_screen(  )
 {
    /* only do this stuff on exit when called AFTER initialize_screen */
+#if 0
    if ( interp_initialized )
    {
       display_string( "\n" );
@@ -288,6 +291,7 @@ void reset_screen(  )
 
       tputs( TE, 1, outc );
    }
+#endif
    display_string( "\n" );
 
 }                               /* reset_screen */
@@ -295,6 +299,7 @@ void reset_screen(  )
 void sig_reset_screen(  )
 {
    /* only do this stuff on exit when called AFTER initialize_screen */
+#if 0
    if ( interp_initialized )
    {
       delete_status_window(  );
@@ -310,6 +315,7 @@ void sig_reset_screen(  )
 
       tputs( TE, 1, outc );
    }
+#endif
    display_string( "\n" );
 
 }                               /* sig_reset_screen */
@@ -349,7 +355,7 @@ void select_text_window(  )
 void create_status_window(  )
 {
    int row, col;
-
+/*
    if ( *CS )
    {
       get_cursor_position( &row, &col );
@@ -358,13 +364,13 @@ void create_status_window(  )
 
       move_cursor( row, col );
    }
-
+*/
 }                               /* create_status_window */
 
 void delete_status_window(  )
 {
    int row, col;
-
+/*
    if ( *CS )
    {
       get_cursor_position( &row, &col );
@@ -373,24 +379,24 @@ void delete_status_window(  )
 
       move_cursor( row, col );
    }
-
+*/
 }                               /* delete_status_window */
 
 void clear_line(  )
 {
 
-/*    tputs (CE, 1, outc);*/
+///*    tputs (CE, 1, outc);*/
    int i;
-
+/*
    for ( i = 1; i <= screen_cols; i++ )
       outc( ' ' );
-
+*/
 }                               /* clear_line */
 
 void clear_text_window(  )
 {
    int i, row, col;
-
+/*
    get_cursor_position( &row, &col );
 
    for ( i = status_size + 1; i <= screen_rows; i++ )
@@ -400,13 +406,13 @@ void clear_text_window(  )
    }
 
    move_cursor( row, col );
-
+*/
 }                               /* clear_text_window */
 
 void clear_status_window(  )
 {
    int i, row, col;
-
+/*
    get_cursor_position( &row, &col );
 
    for ( i = status_size; i; i-- )
@@ -416,13 +422,14 @@ void clear_status_window(  )
    }
 
    move_cursor( row, col );
-
+*/
 }                               /* clear_status_window */
 
 void move_cursor( int row, int col )
 {
-
+/*
    tputs( tgoto( CM, col - 1, row - 1 ), 1, outc );
+   */
    current_row = row;
    current_col = col;
 
@@ -530,8 +537,11 @@ void set_attribute( int attribute )
 
 static void display_string( char *s )
 {
-   while ( *s )
-      display_char( *s++ );
+  EM_ASM(
+      console.log(s);
+  );
+/*   while ( *s )
+      display_char( *s++ );*/
 }                               /* display_string */
 
 void display_char( int c )
@@ -546,7 +556,7 @@ void scroll_line(  )
 {
    int row, col;
    int i;
-
+#if 0
    get_cursor_position( &row, &col );
 
    if ( *CS || row < screen_rows )
@@ -573,7 +583,9 @@ void scroll_line(  )
          outc( ' ' );           /* BUGFIX */
       move_cursor( current_row, 1 );
    }
-
+#else
+   EM_ASM( console.log('scroll_line()'); );
+#endif
 }                               /* scroll_line */
 
 /*
@@ -596,7 +608,7 @@ void scroll_line(  )
 int display_command( char *buffer )
 {
    int counter, loop;
-
+#if 0
    move_cursor( row, head_col );
    tputs (CE, 1, outc);  /* fix scoll bug w/ command history */
 
@@ -622,6 +634,9 @@ int display_command( char *buffer )
       }
       return ( counter );
    }
+#else
+   return 0;
+#endif
 }                               /* display_command */
 
 void get_prev_command(  )
@@ -629,7 +644,7 @@ void get_prev_command(  )
    /* Checking to see if ptr1 > 0 prevents moving ptr1 and ptr2 into
     * never-never land.
     */
-
+#if 0
    if ( ptr1 > 0 )
    {
       /* Subtract 2 to jump over any intervening '\n' */
@@ -657,10 +672,12 @@ void get_prev_command(  )
          ptr1++;
       }
    }
+#endif
 }                               /* get_prev_command */
 
 void get_next_command(  )
 {
+#if 0
    if ( ptr2 < end_ptr )
    {
       /* Add 2 to advance over any intervening '\n' */
@@ -678,6 +695,7 @@ void get_next_command(  )
          ptr2--;
       }
    }
+#endif
 }                               /* get_next_command */
 
 void get_first_command(  )
@@ -757,6 +775,7 @@ int input_line( int buflen, char *buffer, int timeout, int *read_size )
   EM_ASM(
     console.log('in input_line()');
   );
+  return 0;
 #else
    struct timeval tv;
    struct timezone tz;
@@ -1082,7 +1101,7 @@ static int wait_for_char( int timeout )
 static int read_key( int mode )
 {
    int c;
-
+#if 0
    if ( mode == PLAIN )
    {
       do
@@ -1125,6 +1144,10 @@ static int read_key( int mode )
 
    return ( c );
 
+#else
+   EM_ASM( console.log('read_key()'); );
+   return 0;
+#endif
 }                               /* read_key */
 
 static void set_cbreak_mode( int mode )

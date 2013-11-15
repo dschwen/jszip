@@ -53,13 +53,19 @@ static void configure( zbyte_t, zbyte_t );
  * Initialise environment, start interpreter, clean up.
  */
 
+#ifdef EMSCRIPTEN
+int spinupJS( char *fname ) 
+{
+   open_story( fname );
+
+   configure( V1, V8 );
+#else
 int main( int argc, char *argv[] )
 {
    process_arguments( argc, argv );
 
    configure( V1, V8 );
 
-#ifndef EMSCRIPTEN
    initialize_screen(  );
 #endif
 
@@ -88,7 +94,6 @@ int cleanupJS()
    exit( EXIT_SUCCESS );
 
    return ( 0 );
-
 }                               /* main */
 
 /*
