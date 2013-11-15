@@ -137,36 +137,29 @@ void outc( int c )
 
 void initialize_screen(  )
 {
-   char *term;
    int row, col;
-
-   if ( ( term = getenv( "TERM" ) ) == NULL )
-      fatal( "initialize_screen(): No TERM environment variable" );
-
-   if ( tgetent( tcbuf, term ) <= 0 )
-      fatal( "initialize_screen(): No termcap entry for this terminal" );
 
    cmbufp = cmbuf;
 
    /* COMMENTS to aid in porting to other sys. */
-   GET_TC_STR( CE, "ce" );      /* clear to end of line                     */
-   GET_TC_STR( CL, "cl" );      /* clear screen, home cursor                */
-   GET_TC_STR( CM, "cm" );      /* screen-rel cursor motion to row m, col n */
-   GET_TC_STR( CS, "cs" );      /* change scroll region to lines m thru n   */
-   GET_TC_STR( DL, "dl" );      /* delete line                              */
-   GET_TC_STR( MD, "md" );      /* turn on bold attribute                   */
-   GET_TC_STR( ME, "me" );      /* turn off all attributes                  */
-   GET_TC_STR( MR, "mr" );      /* turn on reverse video attribute          */
-   GET_TC_STR( SE, "se" );      /* end standout mode                        */
-   GET_TC_STR( SO, "so" );      /* begin standout mode                      */
-   GET_TC_STR( TE, "te" );      /* string to end a termcap program          */
-   GET_TC_STR( TI, "ti" );      /* string to begin a termcap program        */
-   GET_TC_STR( UE, "ue" );      /* end underscore mode                      */
-   GET_TC_STR( US, "us" );      /* begin underscore mode                    */
-   GET_TC_STR( KU, "ku" );      /* sent by keypad up arrow                  */
-   GET_TC_STR( KD, "kd" );      /* sent by keypad down arrow                */
-   GET_TC_STR( KL, "kl" );      /* sent by keypad left arrow                */
-   GET_TC_STR( KR, "kr" );      /* sent by keypad right arrow               */
+   //GET_TC_STR( CE, "ce" );      /* clear to end of line                     */
+   //GET_TC_STR( CL, "cl" );      /* clear screen, home cursor                */
+   //GET_TC_STR( CM, "cm" );      /* screen-rel cursor motion to row m, col n */
+   //GET_TC_STR( CS, "cs" );      /* change scroll region to lines m thru n   */
+   //GET_TC_STR( DL, "dl" );      /* delete line                              */
+   //GET_TC_STR( MD, "md" );      /* turn on bold attribute                   */
+   //GET_TC_STR( ME, "me" );      /* turn off all attributes                  */
+   //GET_TC_STR( MR, "mr" );      /* turn on reverse video attribute          */
+   //GET_TC_STR( SE, "se" );      /* end standout mode                        */
+   //GET_TC_STR( SO, "so" );      /* begin standout mode                      */
+   //GET_TC_STR( TE, "te" );      /* string to end a termcap program          */
+   //GET_TC_STR( TI, "ti" );      /* string to begin a termcap program        */
+   //GET_TC_STR( UE, "ue" );      /* end underscore mode                      */
+   //GET_TC_STR( US, "us" );      /* begin underscore mode                    */
+   //GET_TC_STR( KU, "ku" );      /* sent by keypad up arrow                  */
+   //GET_TC_STR( KD, "kd" );      /* sent by keypad down arrow                */
+   //GET_TC_STR( KL, "kl" );      /* sent by keypad left arrow                */
+   //GET_TC_STR( KR, "kr" );      /* sent by keypad right arrow               */
 
    if ( right_margin == 0 && tgetflag( "am" ) && !tgetflag( "xn" ) ) /* *JWK* */
       right_margin = 1;         /* *JWK* */

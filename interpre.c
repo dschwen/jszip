@@ -50,7 +50,9 @@ int interpret(  )
    zword_t specifier, operand[8];
    int maxoperands, count, extended, i;
 
+#ifndef EMSCRIPTEN
    interpreter_status = 1;
+#endif
 
    /* Loop until HALT instruction executed */
 

@@ -59,13 +59,23 @@ int main( int argc, char *argv[] )
 
    configure( V1, V8 );
 
+#ifndef EMSCRIPTEN
    initialize_screen(  );
+#endif
 
    load_cache(  );
 
    z_restart(  );
 
+#ifdef EMSCRIPTEN
+   interpreter_status = 1;
+   return 0;
+}
+int cleanupJS() 
+{
+#else
    ( void ) interpret(  );
+#endif
 
    unload_cache(  );
 
