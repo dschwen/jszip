@@ -37,6 +37,10 @@
  *
  */
 
+#ifdef EMSCRIPTEN
+#include <emscripten.h>
+#endif
+
 #include "ztypes.h"
 
 static int saved_formatting = ON;
@@ -706,9 +710,12 @@ void z_set_text_style( zword_t mode )
 
 void write_string( const char *s )
 {
+#ifdef EMSCRIPTEN
+  asm("window['jsPrintString'](%0)" : : "r"(s) );
+#else
    while ( *s )
       write_char( *s++ );
-
+#endif
 }                               /* write_string */
 
 /*

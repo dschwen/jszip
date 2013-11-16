@@ -32,6 +32,10 @@
  *
  */
 
+#ifdef EMSCRIPTEN
+#include <emscripten.h>
+#endif
+
 #include "ztypes.h"
 
 /*
@@ -110,7 +114,9 @@ void z_split_window( zword_t lines )
 
    if ( h_type < V4 )
       lines++;
-
+#ifdef EMSCRIPTEN
+  asm("window['jsSplitWindow'](%0)" : : "r"(lines) );
+#else
    if ( lines )
    {
 
@@ -155,7 +161,7 @@ void z_split_window( zword_t lines )
 
       select_text_window(  );
    }
-
+#endif
 }                               /* z_split_window */
 
 /*
@@ -339,6 +345,9 @@ void z_show_status( void )
 
 void blank_status_line( void )
 {
+#ifdef EMSCRIPTEN
+  asm("window['jsBlankStatus']()" : : );
+#else
 
    /* Move the cursor to the top line of the status window, set the reverse
     * rendition and print the status line */
@@ -363,7 +372,7 @@ void blank_status_line( void )
 
    set_attribute( NORMAL );
    z_set_window( TEXT_WINDOW );
-
+#endif
 }                               /* blank_status_line */
 
 /*
@@ -375,8 +384,12 @@ void blank_status_line( void )
 
 void output_string( const char *s )
 {
+#ifdef EMSCRIPTEN
+  asm("window['jsPrintString'](%0)" : : "r"(s) );
+#else
    while ( *s )
       output_char( *s++ );
+#endif
 }                               /* output_string */
 
 /*
@@ -420,7 +433,7 @@ void output_char( int c )
 void output_new_line( void )
 {
    int row, col;
-
+#ifndef EMSCRIPTEN
    /* Don't print if output is disabled or replaying commands */
 
    if ( outputting == ON )
@@ -466,7 +479,7 @@ void output_new_line( void )
 
          output_char( '\n' );
    }
-
+#endif
 }                               /* output_new_line */
 
 /*
@@ -485,7 +498,9 @@ void z_print_table( int argc, zword_t * argv )
    unsigned long address;
    unsigned int width, height;
    unsigned int row, column;
-
+#ifdef EMSCRIPTEN
+   EM_ASM( console.log('z_print_table'); );
+#else
    /* Supply default arguments */
 
    if ( argc < 3 )
@@ -516,7 +531,7 @@ void z_print_table( int argc, zword_t * argv )
          move_cursor( ++row, column );
 
    }
-
+#endif
 }                               /* z_print_table */
 
 /*

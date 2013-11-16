@@ -25,14 +25,22 @@
 div.output {
   margin-bottom: 0.2em;
 }
-div.output, #inputline, #inputline>input {
+div.output, #inputline, #inputline>input, #statuswindow {
   font-family: serif;
   font-size: 12pt;
+}
+#statuswindow {
+  display: none;
+  width: 100%;
+  background-color: black;
+  color: white;
+  font-weight: bold;
 }
 
 </style>
 </head>
 <body>
+<div id="statuswindow"></div>
 <div id="inputline">
 <input id="input" type="text">
 <span class="prompt"><b>&gt;</b></span>
@@ -41,7 +49,8 @@ div.output, #inputline, #inputline>input {
 (function(){
   var history = ['south','examine house','open door','west','lift rug']
     , hindex = history.length
-    , $input = $('#input');
+    , $input = $('#input')
+    , $statw = $('#statuswindow');
 
   // hook key events up to input widget
   $input.focus().keydown(function(e) { 
@@ -74,13 +83,36 @@ div.output, #inputline, #inputline>input {
   });
 
   // functions to be called from the c code
+  var out=window['output']={ buf:''};
   window['jsPrintString'] = function(s) {
     var c,t='',p=s; 
     while(c=Module.getValue(p++, 'i8')) { 
-      t=t+String.fromCharCode(c) 
+      if(c==13 || c==10 || out.buf.length>20) {
+        if(out.buf!='') {
+          $('#inputline').before($('<div class="output"></div>').text(tbuf));
+        }
+        out.buf='';
+      } else {
+        out.buf += String.fromCharCode(c);
+      }
     } 
-    console.log('display_string: ',t);
   }
+  window['jsBlankStatus'] = function() {
+    console.log('blank_status()');
+  }
+  window['jsSplitWindow'] = function(lines) {
+    $('body').css('padding-top',lines+'em');
+    if(lines) {
+      $statw.show().css('height',lines+'em');
+    } else {
+      $statw.hide();
+    } 
+  }
+
+  // Start z-machine
+  spinupJS = Module.cwrap('spinupJS', 'number', ['string']);
+  spinupJS('zork2.z3');
+  _interpret();
 })();
 </script>
 </body>
