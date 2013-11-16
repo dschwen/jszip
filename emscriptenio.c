@@ -355,6 +355,8 @@ void select_text_window(  )
 void create_status_window(  )
 {
    int row, col;
+
+   EM_ASM( console.log('create_status_window()'); );
 /*
    if ( *CS )
    {
@@ -370,6 +372,7 @@ void create_status_window(  )
 void delete_status_window(  )
 {
    int row, col;
+   EM_ASM( console.log('delete_status_window()'); );
 /*
    if ( *CS )
    {
@@ -384,7 +387,7 @@ void delete_status_window(  )
 
 void clear_line(  )
 {
-
+   EM_ASM( console.log('clear_line()'); );
 ///*    tputs (CE, 1, outc);*/
    int i;
 /*
@@ -396,6 +399,7 @@ void clear_line(  )
 void clear_text_window(  )
 {
    int i, row, col;
+   EM_ASM( console.log('clear_text_window()'); );
 /*
    get_cursor_position( &row, &col );
 
@@ -411,6 +415,7 @@ void clear_text_window(  )
 
 void clear_status_window(  )
 {
+   EM_ASM( console.log('clear_status_window()'); );
    int i, row, col;
 /*
    get_cursor_position( &row, &col );
@@ -427,6 +432,9 @@ void clear_status_window(  )
 
 void move_cursor( int row, int col )
 {
+   //EM_ASM( console.log('move_cursor(',_row,_col,')'); );
+   //asm("console.log('move_cursor(',%0,%1,')')" : "r"(row), "r"(col)); 
+   asm("console.log('move_cursor(',%0,%1,')')" : : "r"(row), "r"(col)); 
 /*
    tputs( tgoto( CM, col - 1, row - 1 ), 1, outc );
    */
@@ -467,6 +475,7 @@ void restore_cursor_position(  )
 
 void set_attribute( int attribute )
 {
+   EM_ASM( console.log('set_attribute()'); );
 #if defined HARD_COLORS
    static int emph = 0, rev = 0;
 
@@ -537,11 +546,7 @@ void set_attribute( int attribute )
 
 static void display_string( char *s )
 {
-  EM_ASM(
-      console.log(s);
-  );
-/*   while ( *s )
-      display_char( *s++ );*/
+  asm("window['jsPrintString'](%0)" : : "r"(s) );
 }                               /* display_string */
 
 void display_char( int c )

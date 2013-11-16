@@ -85,7 +85,7 @@ ckifzs : ckifzs.bc
 
 
 clean :
-	-rm -f *.bc
+	-rm -f *.bc jzip.js
 
 realclean :
 	-rm -f *bc jzip jzexe ckifzs

@@ -5,3 +5,4 @@ in jzip.html console:
 spinupJS = Module.cwrap('spinupJS', 'number', ['string'])
 spinupJS('zork2.z3')
 
+interpret = Module.cwrap('_interpret','number')

@@ -72,6 +72,15 @@ div.output, #inputline, #inputline>input {
         break;
     }
   });
+
+  // functions to be called from the c code
+  window['jsPrintString'] = function(s) {
+    var c,t='',p=s; 
+    while(c=Module.getValue(p++, 'i8')) { 
+      t=t+String.fromCharCode(c) 
+    } 
+    console.log('display_string: ',t);
+  }
 })();
 </script>
 </body>

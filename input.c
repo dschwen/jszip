@@ -31,6 +31,10 @@
  *
  */
 
+#ifdef EMSCRIPTEN
+#include <emscripten.h>
+#endif
+
 #include "ztypes.h"
 
 /* Statically defined word separator list */
@@ -249,6 +253,10 @@ int get_line( char *cbuf, zword_t timeout, zword_t action_routine )
        * call the timeout action routine. If the return status from the
        * timeout routine was 0 then try to read the line again */
 
+#ifdef EMSCRIPTEN
+      EM_ASM( console.log('get_line()'); );
+      exit(0);
+#endif
       do
       {
          c = input_line( buflen, buffer, timeout, &read_size );
