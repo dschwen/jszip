@@ -129,14 +129,18 @@ div.output, #inputline, #inputline>input, #statuswindow {
       h=setTimeout(function(){ },t*1000);
     }
   }
+  
+  // exported functions
+  var spinupJS  = Module.cwrap('spinupJS', 'number', ['string'])
+    , interpret = Module.cwrap('interpret', 'number');
+
 
   // Start z-machine
-  spinupJS = Module.cwrap('spinupJS', 'number', ['string']);
   spinupJS('zork2.z3');
 
   // call interpreter
   try {
-    _interpret();
+    interpret();
   } catch(e) {
     console.log('Exception:',e);
     switch(e.task||'') {

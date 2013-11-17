@@ -77,7 +77,7 @@ int main( int argc, char *argv[] )
    interpreter_status = 1;
    return 0;
 }
-int cleanupJS() 
+int cleanupJS(int dummy) 
 {
 #else
    ( void ) interpret(  );
