@@ -268,7 +268,8 @@ int get_line( char *cbuf, zword_t timeout, zword_t action_routine )
        * timeout routine was 0 then try to read the line again */
 
 #ifdef EMSCRIPTEN
-      asm( "throw { task:'getLine', cbuf: %0, buffer: %1, timeout: %2, action_routine: %3, arg_list: %4 };" : : "r"(cbuf),"r"(buffer),"r"(timeout),"r"(action_routine), "r"(arg_list) );
+      asm( "window['argstore']['arg_list']=[%0,%1]" : : "r"(arg_list[0]),"r"(arg_list[1]) );
+      asm( "throw { task:'getLine', cbuf: %0, buffer: %1, timeout: %2, action_routine: %3 };" : : "r"(cbuf),"r"(buffer),"r"(timeout),"r"(action_routine) );
    }
    return 0; // please compiler, never reached
 }
@@ -290,10 +291,13 @@ int get_line( char *cbuf, zword_t timeout, zword_t action_routine )
 #endif
 
 #ifdef EMSCRIPTEN
-void jsrGetLine(char* cbuf, char* buffer, int read_size, int c, int timeout, int action_routine, zword_t *arg_list ) {
+void jsrGetLine(char* cbuf, char* buffer, int read_size, int c, int timeout, int action_routine ) {
   int status = 0;
+  zword_t arg_list[2];
+  asm( "window['argstore']['arg_list'][0]" : "=r"(arg_list[0]) : );
+  asm( "window['argstore']['arg_list'][1]" : "=r"(arg_list[1]) : );
   if( c == -1 && ( status = z_call( 1, arg_list, ASYNC ) ) == 0 ) {
-      asm( "throw { task:'getLine', cbuf: %0, buffer: %1, timeout: %2, action_routine: %3, arg_list: %4 };" : : "r"(cbuf),"r"(buffer),"r"(timeout),"r"(action_routine), "r"(arg_list) );
+      asm( "throw { task:'getLine', cbuf: %0, buffer: %1, timeout: %2, action_routine: %3 };" : : "r"(cbuf),"r"(buffer),"r"(timeout),"r"(action_routine) );
   }
   if(status) read_size=0;
 #endif

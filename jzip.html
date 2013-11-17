@@ -54,7 +54,8 @@ div.output, #inputline, #inputline>input, #statuswindow {
   var history = ['south','examine house','open door','west','lift rug']
     , hindex = history.length
     , $input = $('#input')
-    , $statw = $('#statuswindow');
+    , $statw = $('#statuswindow')
+    , lineCallback = null;
 
   // hook key events up to input widget
   $input.focus().keydown(function(e) { 
@@ -80,11 +81,18 @@ div.output, #inputline, #inputline>input, #statuswindow {
           hindex = history.length;
           history[hindex++] = v; 
         }
-        $('#inputline').before($('<div class="output"></div>').text(v));
-        $input.val('');
+        if(lineCallback) {
+          $input.val('');
+          lineCallback();
+        } else {
+          e.preventDefault();
+        }
         break;
     }
   });
+
+  // hide input widget
+  $('#inputline').hide();
 
   // functions to be called from the c code
   var out = window['output']={ buf:'', text: true }
@@ -126,9 +134,18 @@ div.output, #inputline, #inputline>input, #statuswindow {
   // tasks
   function taskGetLine(e) {
     var t=e.timeout,h=null;
+    
+    // display input line
+    $('#inputline').show();
+    $input.focus();
+    lineCallback=function() { 
+      $('#inputline').hide();
+      lineCallback=null;
+    };
+
     // set up a timeout
     if(t>0) {
-      h = setTimeout(function(){ jsrGetLine(e.cbuf, e.buffer, 0, -1, e.timeout, e.action_routine, e.arg_list) },t*1000);
+      h = setTimeout(function(){ jsrGetLine(e.cbuf, e.buffer, 0, -1, e.timeout, e.action_routine ) },t*1000);
     }
   }
   
