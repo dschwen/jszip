@@ -24,6 +24,7 @@
 }
 div.output {
   margin-bottom: 0.2em;
+  min-height: 0.5em;
 }
 div.output, #inputline, #inputline>input, #statuswindow {
   font-family: serif;
@@ -32,9 +33,12 @@ div.output, #inputline, #inputline>input, #statuswindow {
 #statuswindow {
   display: none;
   width: 100%;
+  padding: 0.5em;
   background-color: black;
   color: white;
   font-weight: bold;
+  position: fixed;
+  top: 0; left: 0;
 }
 
 </style>
@@ -55,7 +59,7 @@ div.output, #inputline, #inputline>input, #statuswindow {
   // hook key events up to input widget
   $input.focus().keydown(function(e) { 
     var v = $input.val();
-    console.log(e.keyCode);
+    //console.log(e.keyCode);
     switch(e.keyCode) {
       case 38: // Cursor up
         if (hindex>0) {
@@ -83,25 +87,34 @@ div.output, #inputline, #inputline>input, #statuswindow {
   });
 
   // functions to be called from the c code
-  var out=window['output']={ buf:''};
+  var out=window['output']={ buf:'', text: true };
+  var writeChar = window['jsWriteChar'] = function(c) {
+    if(c==13 || c==10 ) {
+      if(out.text) {
+        $('#inputline').before($('<div class="output"></div>').text(out.buf));
+      } else {
+        $statw.text(out.buf);
+      }
+      out.buf='';
+    } else {
+      out.buf += String.fromCharCode(c);
+    }
+  }
   window['jsPrintString'] = function(s) {
     var c,t='',p=s; 
-    while(c=Module.getValue(p++, 'i8')) { 
-      if(c==13 || c==10 || out.buf.length>20) {
-        if(out.buf!='') {
-          $('#inputline').before($('<div class="output"></div>').text(tbuf));
-        }
-        out.buf='';
-      } else {
-        out.buf += String.fromCharCode(c);
-      }
+    while(c=Module.getValue(p++, 'i8')) {
+      writeChar(c);
     } 
+    console.log('printstring',p-s,s,p);
   }
   window['jsBlankStatus'] = function() {
     console.log('blank_status()');
   }
+  window['jsMoveCursor'] = function(row,col) {
+    console.log(out.text,row,col);
+  }
   window['jsSplitWindow'] = function(lines) {
-    $('body').css('padding-top',lines+'em');
+    $('body').css('padding-top',(lines+1)+'em');
     if(lines) {
       $statw.show().css('height',lines+'em');
     } else {
@@ -109,10 +122,31 @@ div.output, #inputline, #inputline>input, #statuswindow {
     } 
   }
 
+  // tasks
+  function taskGetLine(e) {
+    var t=e.timeout,h=null;
+    if(t>0) {
+      h=setTimeout(function(){ },t*1000);
+    }
+  }
+
   // Start z-machine
   spinupJS = Module.cwrap('spinupJS', 'number', ['string']);
   spinupJS('zork2.z3');
-  _interpret();
+
+  // call interpreter
+  try {
+    _interpret();
+  } catch(e) {
+    console.log('Exception:',e);
+    switch(e.task||'') {
+      case 'getLine': 
+        taskGetLine(e); 
+        break;
+      default:
+        throw e;
+    }
+  }
 })();
 </script>
 </body>

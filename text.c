@@ -458,7 +458,6 @@ void write_zchar( int c )
    c = ( unsigned int ) ( c & 0xff );
 
    /* If character is not special character then just write it */
-
    if ( c >= ' ' && c <= '~' )
    {
       write_char( c );
@@ -577,6 +576,9 @@ void write_char( int c )
    char *cp;
    int right_len;
 
+#ifdef EMSCRIPTEN
+   asm("window['jsWriteChar'](%0)" : : "r"(c) );
+#else
    /* Only do if text formatting is turned on */
 
    if ( redirect_depth )
@@ -677,7 +679,7 @@ void write_char( int c )
       script_char( c );
       output_char( c );
    }
-
+#endif
 }                               /* write_char */
 
 /*

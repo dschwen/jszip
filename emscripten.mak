@@ -72,10 +72,11 @@ OBJS = jzip.bc control.bc extern.bc fileio.bc input.bc interpre.bc license.bc \
 all  : jzip.js
 
 jzip.js : $(OBJS) ztypes.h jzip.h
-	$(CC) -o $@ $(CFLAGS) $(OBJS) $(LIBS) --embed-file zork2.z3 -s EXPORTED_FUNCTIONS="['_spinupJS','_interpret','_cleanupJS']"
+	$(CC) -o $@ $(CFLAGS) $(OBJS) $(LIBS) --embed-file zork2.z3  --js-transform ./fixcurl.sh -s EXPORTED_FUNCTIONS="['_spinupJS','_interpret','_cleanupJS']"
 
 jzip.html : $(OBJS) ztypes.h jzip.h
-	$(CC) -o $@ $(CFLAGS) $(OBJS) $(LIBS) --embed-file zork2.z3 --pre-js zork2pre.js
+	$(CC) -o $@ $(CFLAGS) $(OBJS) $(LIBS) --embed-file zork2.z3 
+#	$(CC) -o $@ $(CFLAGS) $(OBJS) $(LIBS) --embed-file zork2.z3 --pre-js zork2pre.js
 
 jzexe : jzexe.bc jzexe.h
 	$(CC) -o $@ $(CFLAGS) jzexe.o

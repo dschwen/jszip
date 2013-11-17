@@ -254,9 +254,11 @@ int get_line( char *cbuf, zword_t timeout, zword_t action_routine )
        * timeout routine was 0 then try to read the line again */
 
 #ifdef EMSCRIPTEN
-      EM_ASM( console.log('get_line()'); );
-      exit(0);
-#endif
+      asm( "throw { task:'getLine', cbuf: %0, timeout: %1, action: %2 };" : : "r"(cbuf),"r"(timeout),"r"(action_routine)  );
+   }
+   return 0; // please compiler, never reached
+}
+#else
       do
       {
          c = input_line( buflen, buffer, timeout, &read_size );
@@ -271,7 +273,11 @@ int get_line( char *cbuf, zword_t timeout, zword_t action_routine )
 
 
    }
+#endif
 
+#ifdef EMSCRIPTEN
+void jsrGetLine(char* cbuf, char* buffer, int read_size, int c) {
+#endif
    /* Zero terminate line */
 
    if ( h_type > V4 )
@@ -284,8 +290,11 @@ int get_line( char *cbuf, zword_t timeout, zword_t action_routine )
       buffer[read_size] = '\0';
    }
 
+#ifdef EMSCRIPTEN
+   // call a jsrXXXX(c)
+#else
    return ( c );
-
+#endif
 }                               /* get_line */
 
 /*
