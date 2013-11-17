@@ -83,7 +83,7 @@ div.output, #inputline, #inputline>input, #statuswindow {
         }
         if(lineCallback) {
           $input.val('');
-          lineCallback();
+          lineCallback(v);
         } else {
           e.preventDefault();
         }
@@ -138,9 +138,19 @@ div.output, #inputline, #inputline>input, #statuswindow {
     // display input line
     $('#inputline').show();
     $input.focus();
-    lineCallback=function() { 
+    lineCallback=function(text) { 
+      var i,l=text.length;
+      
+      // clean up
       $('#inputline').hide();
       lineCallback=null;
+      if(h) clearTimeout(h);
+
+      // put text into buffer
+      for(i=0;i<l;++i) {
+        Module.setValue(e.buffer+i,text.charCodeAt(i),'i8');
+      }
+      jsrGetLine(e.cbuf, e.buffer, l, 13, e.timeout, e.action_routine );
     };
 
     // set up a timeout
