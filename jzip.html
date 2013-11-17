@@ -101,6 +101,7 @@ div.output, #inputline, #inputline>input, #statuswindow {
     if(c==13 || c==10 ) {
       if(out.text) {
         $('#inputline').before($('<div class="output"></div>').text(out.buf));
+        scrollBottom();
       } else {
         $statw.text(out.buf);
       }
@@ -138,6 +139,7 @@ div.output, #inputline, #inputline>input, #statuswindow {
     // display input line
     $('#inputline').show();
     $input.focus();
+    scrollBottom();
     lineCallback=function(text) { 
       var i,l=text.length;
       
@@ -151,11 +153,12 @@ div.output, #inputline, #inputline>input, #statuswindow {
         Module.setValue(e.buffer+i,text.charCodeAt(i),'i8');
       }
       jsrGetLine(e.cbuf, e.buffer, l, 13, e.timeout, e.action_routine );
+      step();
     };
 
     // set up a timeout
     if(t>0) {
-      h = setTimeout(function(){ jsrGetLine(e.cbuf, e.buffer, 0, -1, e.timeout, e.action_routine ) },t*1000);
+      h = setTimeout(function(){ jsrGetLine(e.cbuf, e.buffer, 0, -1, e.timeout, e.action_routine ); step(); },t*1000);
     }
   }
   
@@ -164,23 +167,30 @@ div.output, #inputline, #inputline>input, #statuswindow {
     , interpret = Module.cwrap('interpret', 'number')
     , jsrGetLine = Module.cwrap('jsrGetLine', 'number', ['number','number','number','number','number','number']);
 
+  // helper functions 
+  function scrollBottom() {
+    $('body')[0].scrollTop=$('body').height()
+  }
 
   // Start z-machine
   spinupJS('zork2.z3');
 
   // call interpreter
-  try {
-    interpret();
-  } catch(e) {
-    console.log('Exception:',e);
-    switch(e.task||'') {
-      case 'getLine': 
-        taskGetLine(e); 
-        break;
-      default:
-        throw e;
+  function step() {
+    try {
+      interpret();
+    } catch(e) {
+      console.log('Exception:',e);
+      switch(e.task||'') {
+        case 'getLine': 
+          taskGetLine(e); 
+          break;
+        default:
+          throw e;
+      }
     }
   }
+  step();
 })();
 </script>
 </body>
