@@ -459,7 +459,9 @@ int get_file_name( char *file_name, char *default_name, int flag )
    }
 
    /* Prompt for the file name */
-
+#ifdef EMSCRIPTEN
+      strcpy( file_name, "save.sav" );
+#else
    output_line( "Enter a file name." );
    output_string( "(Default is \"" );
    output_string( default_name );
@@ -480,7 +482,7 @@ int get_file_name( char *file_name, char *default_name, int flag )
    }
    else
       strcpy( file_name, &buffer[1] );
-
+#endif
    /* If nothing typed then use the default name */
 
    if ( file_name[0] == '\0' )

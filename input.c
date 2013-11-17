@@ -166,8 +166,22 @@ void z_sread_aread( int argc, zword_t * argv )
    in_size = ( h_type > V4 ) ? cbuf[1] : 0;
 
    /* Read the line then script and record it */
-
+#ifdef EMSCRIPTEN
+   // save argv and in_size over to next block
+   asm("window['argstore']['argv']=%0; window['argstore']['in_size']=%1" : : "r"(argv),"r"(in_size) );
+#endif
    terminator = get_line( cbuf, argv[2], argv[3] );
+#ifdef EMSCRIPTEN
+}
+void jsrZSReadARead(int terminator, char *cbuf) {
+  char *buffer;
+  int out_size,i;
+  // recover argv and in_size from previous block
+  zword_t *argv; 
+  int in_size;
+  asm("window['argstore']['argv']" : "=r"(argv) : );
+  asm("window['argstore']['in_size']" : "=r"(in_size) : );
+#endif
    script_line( ( h_type > V4 ) ? &cbuf[2] : &cbuf[1] );
    record_line( ( h_type > V4 ) ? &cbuf[2] : &cbuf[1] );
 
@@ -254,7 +268,7 @@ int get_line( char *cbuf, zword_t timeout, zword_t action_routine )
        * timeout routine was 0 then try to read the line again */
 
 #ifdef EMSCRIPTEN
-      asm( "throw { task:'getLine', cbuf: %0, timeout: %1, action: %2 };" : : "r"(cbuf),"r"(timeout),"r"(action_routine)  );
+      asm( "throw { task:'getLine', cbuf: %0, buffer: %1, timeout: %2, action_routine: %3, arg_list: %4 };" : : "r"(cbuf),"r"(buffer),"r"(timeout),"r"(action_routine), "r"(arg_list) );
    }
    return 0; // please compiler, never reached
 }
@@ -276,7 +290,12 @@ int get_line( char *cbuf, zword_t timeout, zword_t action_routine )
 #endif
 
 #ifdef EMSCRIPTEN
-void jsrGetLine(char* cbuf, char* buffer, int read_size, int c) {
+void jsrGetLine(char* cbuf, char* buffer, int read_size, int c, int timeout, int action_routine, zword_t *arg_list ) {
+  int status = 0;
+  if( c == -1 && ( status = z_call( 1, arg_list, ASYNC ) ) == 0 ) {
+      asm( "throw { task:'getLine', cbuf: %0, buffer: %1, timeout: %2, action_routine: %3, arg_list: %4 };" : : "r"(cbuf),"r"(buffer),"r"(timeout),"r"(action_routine), "r"(arg_list) );
+  }
+  if(status) read_size=0;
 #endif
    /* Zero terminate line */
 
@@ -291,7 +310,7 @@ void jsrGetLine(char* cbuf, char* buffer, int read_size, int c) {
    }
 
 #ifdef EMSCRIPTEN
-   // call a jsrXXXX(c)
+   jsrZSReadARead(c,cbuf);
 #else
    return ( c );
 #endif

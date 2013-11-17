@@ -87,7 +87,8 @@ div.output, #inputline, #inputline>input, #statuswindow {
   });
 
   // functions to be called from the c code
-  var out=window['output']={ buf:'', text: true };
+  var out = window['output']={ buf:'', text: true }
+    , argstore = window['argstore']={};
   var writeChar = window['jsWriteChar'] = function(c) {
     if(c==13 || c==10 ) {
       if(out.text) {
@@ -125,14 +126,16 @@ div.output, #inputline, #inputline>input, #statuswindow {
   // tasks
   function taskGetLine(e) {
     var t=e.timeout,h=null;
+    // set up a timeout
     if(t>0) {
-      h=setTimeout(function(){ },t*1000);
+      h = setTimeout(function(){ jsrGetLine(e.cbuf, e.buffer, 0, -1, e.timeout, e.action_routine, e.arg_list) },t*1000);
     }
   }
   
   // exported functions
   var spinupJS  = Module.cwrap('spinupJS', 'number', ['string'])
-    , interpret = Module.cwrap('interpret', 'number');
+    , interpret = Module.cwrap('interpret', 'number')
+    , jsrGetLine = Module.cwrap('jsrGetLine', 'number', ['number','number','number','number','number','number']);
 
 
   // Start z-machine
