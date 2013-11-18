@@ -67,20 +67,25 @@ div.output, #inputline, #inputline>input, #statuswindow {
 }
 .dialog>div>h2 {
   font-size:13pt;
+  margin: 0.5em 0 0 0;
 }
 .option {
   position: relative;
   margin-left: 2em;
   min-height: 2em;
+  clear: both;
+}
+.option>br {
+  clear: both
 }
 .option>input[type=radio] {
-  position: absolute;
+  position: relative;
   left: -2em;
-  top: 0;
 }
-.dialog>button {
+.option>button {
   float: right;
 }
+.cloudsave { display: none }
 </style>
 </head>
 <body>
@@ -101,22 +106,31 @@ div.output, #inputline, #inputline>input, #statuswindow {
   <div class="localsave">
     <h2>&hellip;in this browser</h2>
     <div class="option">
-      <input type="radio" name="savetype"/>
+      <input type="radio" name="savetype" value="localnew" checked/>
+      <input type="text" id="savelocalnewname" placeholder="New File"/>
+      <br/>
+      <input type="radio" name="savetype" value="localold"/>
+      <select id="savelocaloldname">
+      <option>awesome_save.sav</option>
+      </select>
+      <br/>
+      <button>Save</button>
+      <br/>
     </div>
   </div>
   <div class="filesave">
     <h2>&hellip;on this computer</h2>
     <div class="option">
-      <input type="radio" name="savetype"/>
+      <a id="downloadsave" href="">Download save file&hellip;</a>
     </div>
   </div>
   <div class="cloudsave">
     <h2>&hellip;in the cloud</h2>
     <div class="option">
       <input type="radio" name="savetype"/>
+      <button>Save</button>
     </div>
   </div>
-  <button>Save</button>
 </div>
 
 <div class="dialog" id="restoredialog">
@@ -255,7 +269,8 @@ div.output, #inputline, #inputline>input, #statuswindow {
     }
   }
   function taskSave() {
-    // do something with the save.sav tmp file
+    // base64 encode the save.sav tmp for download
+    $('#downloadsave').attr('href','data:text/csv;base64,' + base64enc(FS.readFile('save.sav')) );
   }
   function taskRestore() {
     // provide the save.sav tmp file
@@ -273,6 +288,30 @@ div.output, #inputline, #inputline>input, #statuswindow {
   // helper functions 
   function scrollBottom() {
     $('body')[0].scrollTop=$('body').height()
+  }
+  function base64enc(file) {
+    // http://www.webtoolkit.info/javascript-base64.html
+    var output = "",
+        keyStr = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=",
+        chr1, chr2, chr3, enc1, enc2, enc3, enc4,
+        i = 0;
+
+    while (i < file.length) {
+      chr1 = file[i++]; chr2 = file[i++]; chr3 = file[i++];
+
+      enc1 = chr1 >> 2;
+      enc2 = ((chr1 & 3) << 4) | (chr2 >> 4);
+      enc3 = ((chr2 & 15) << 2) | (chr3 >> 6);
+      enc4 = chr3 & 63;
+
+      if (isNaN(chr2)) {
+        enc3 = enc4 = 64;
+      } else if (isNaN(chr3)) {
+        enc4 = 64;
+      }
+      output += keyStr.charAt(enc1) + keyStr.charAt(enc2) + keyStr.charAt(enc3) + keyStr.charAt(enc4);
+    }
+    return output;
   }
 
   // Start z-machine

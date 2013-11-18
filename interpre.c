@@ -124,13 +124,14 @@ int interpret(  )
 
                case 0x00:
                  z_save( count, operand[0], operand[1], operand[2] );
-#ifdef EMSCIPTEN
-                 asm( "throw { name:'z_save' }" :: );
+#ifdef EMSCRIPTEN
+                 asm( "throw { task:'z_save' }" :: );
 #endif
                   break;
                case 0x01:
-#ifdef EMSCIPTEN
-                 asm( "throw { name:'z_restore', count:%0, o0:%1, o1:%2, o2:%3 }" :: "r"(count), "r"(operand[0]), "r"(operand[1]), "r"(operand[2]) );
+                 asm( "console.log('z_save')" :: );
+#ifdef EMSCRIPTEN
+                 asm( "throw { task:'z_restore', count:%0, o0:%1, o1:%2, o2:%3 }" :: "r"(count), "r"(operand[0]), "r"(operand[1]), "r"(operand[2]) );
 #else
                   z_restore( count, operand[0], operand[1], operand[2] );
 #endif
@@ -446,13 +447,13 @@ int interpret(  )
                   break;
                case 0x05:
                   z_save( 0, 0, 0, 0 );
-#ifdef EMSCIPTEN
-                 asm( "throw { name:'z_save' }" :: );
+#ifdef EMSCRIPTEN
+                 asm( "throw { task:'z_save' }" :: );
 #endif
                   break;
                case 0x06:
-#ifdef EMSCIPTEN
-                 asm( "throw { name:'z_restore', count:0, o0:0, o1:0, o2:0 }" :: );
+#ifdef EMSCRIPTEN
+                 asm( "throw { task:'z_restore', count:0, o0:0, o1:0, o2:0 }" :: );
 #else
                   z_restore( 0, 0, 0, 0 );
 #endif
