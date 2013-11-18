@@ -78,7 +78,7 @@ div.output, #inputline, #inputline>input, #statuswindow {
 .option>br {
   clear: both
 }
-.option>input[type=radio] {
+.option input[type=radio] {
   position: relative;
   left: -2em;
 }
@@ -86,7 +86,9 @@ div.output, #inputline, #inputline>input, #statuswindow {
   float: right;
 }
 .cloudsave { display: none }
-.localsave { display: none }
+.cloudrestore { display: none }
+
+.localsave { /*display: none */ }
 </style>
 </head>
 <body>
@@ -110,10 +112,12 @@ div.output, #inputline, #inputline>input, #statuswindow {
       <input type="radio" name="savetype" value="localnew" checked/>
       <input type="text" id="savelocalnewname" placeholder="New File"/>
       <br/>
+      <div class="haslocal">
       <input type="radio" name="savetype" value="localold"/>
       <select id="savelocaloldname">
       <option>awesome_save.sav</option>
       </select>
+      </div>
       <br/>
       <button>Save</button>
       <br/>
@@ -135,11 +139,37 @@ div.output, #inputline, #inputline>input, #statuswindow {
 </div>
 
 <div class="dialog" id="restoredialog">
+  <h1>Restore game&hellip;</h1>
+  <div class="localrestore haslocal">
+    <h2>&hellip;from this browser</h2>
+    <div class="option">
+      <input type="radio" name="restoretype" value="localold"/>
+      <select id="restorelocaloldname">
+      <option>awesome_save.sav</option>
+      </select>
+      <br/>
+      <button>Restore</button>
+      <br/>
+    </div>
+  </div>
+  <div class="filerestore">
+    <h2>&hellip;from this computer</h2>
+    <div class="option">
+      <a download="save.sav" id="downloadsave" href="">Upload save file&hellip;</a>
+    </div>
+  </div>
+  <div class="cloudrestore">
+    <h2>&hellip;in the cloud</h2>
+    <div class="option">
+      <input type="radio" name="restoretype"/>
+      <button>Restore</button>
+    </div>
+  </div>
 </div>
 
 <script>
 (function(){
-  var history = ['south','examine house','open door','west','lift rug']
+  var history = []
     , hindex = history.length
     , $input = $('#input')
     , $save = $('#savedialog')
@@ -149,6 +179,7 @@ div.output, #inputline, #inputline>input, #statuswindow {
     , ls = window.localStorage || null
     , lsave = {}   // copy of localStorage sagegames
     , save64 = ''  // current savegame in base64
+    , restoreOpts = null
     , lineCallback = null;
 
   // hook key events up to input widget
@@ -185,12 +216,15 @@ div.output, #inputline, #inputline>input, #statuswindow {
     }
   });
 
-  // hide input widget
+  // hide input widgets
   $('#inputline').hide();
+  $('#readkey').hide();
 
   // get saves from localStorage
   if(ls) {
-    lsaves = JSON.parse(ls.getItem('jszipSaves')||'{}');
+    lsave = JSON.parse(ls.getItem('jszipSaves')||'{}');
+  } else {
+    $('.localsave').hide();
   }
 
   // build save/restore widgets
@@ -200,6 +234,14 @@ div.output, #inputline, #inputline>input, #statuswindow {
     $save.fadeOut();
     step();
   });
+  // auto select radio buttons
+  $('#savelocaloldname').focus(function(){$('#savedialog input[type=radio]').val(['localold']);});
+  $('#savelocalnewname').focus(function(){$('#savedialog input[type=radio]').val(['localnew']);});
+  $('#restorelocaloldname').focus(function(){$('input[type=radio]',$restore).val(['localold']);});
+  $('#restorelocalnewname').focus(function(){$('input[type=radio]',$restore).val(['localnew']);});
+  // save buttons
+  $('.localsave button',$save).click(saveLocal);
+  $('.localrestore button',$restore).click(restoreLocal);
 
   // functions to be called from the c code
   var out = window['output']={ buf:'', text: true }
@@ -282,15 +324,17 @@ div.output, #inputline, #inputline>input, #statuswindow {
     }
   }
   function taskSave() {
+    fillFileSelect('#savelocaloldname');
     $save.fadeIn();
     // base64 encode the save.sav tmp for download
     save64=base64enc(FS.readFile('save.sav'));
     $dload.attr('href','data:text/csv;base64,'+save64);
   }
-  function taskRestore() {
+  function taskRestore(e) {
+    fillFileSelect('#restorelocaloldname');
+    $restore.fadeIn();
+    restoreOpts=e;
     // provide the save.sav tmp file
-    zRestore(e.count,e.o0,e.o1,e.o2)
-    step();
   }
 
   
@@ -327,6 +371,64 @@ div.output, #inputline, #inputline>input, #statuswindow {
       output += keyStr.charAt(enc1) + keyStr.charAt(enc2) + keyStr.charAt(enc3) + keyStr.charAt(enc4);
     }
     return output;
+  }
+  function base64dec(s) {
+    var e={},i,b=0,c,x,l=0,a,r='',w=String.fromCharCode,L=s.length
+      , A="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+    for(i=0;i<64;i++){e[A.charAt(i)]=i;}
+    for(x=0;x<L;x++){
+      c=e[s.charAt(x)];b=(b<<6)+c;l+=6;
+      while(l>=8){((a=(b>>>(l-=8))&0xff)||(x<(L-2)))&&(r+=w(a));}
+    }
+    return r;
+  }
+  function fillFileSelect(s) {
+    var g,$s=$(s),n=true;
+    $s.empty();
+    for(g in lsave) {
+      if( lsave.hasOwnProperty(g) ) {
+        $s.append($('<option></option>').text(g).attr('value',g));
+        n=false;
+      }
+    }
+    if(n) { $('.haslocal').hide() }
+    else  { $('.haslocal').show() }
+  }
+  function saveLocal() {
+    var name, mode = $('#savedialog input[type=radio]:checked').val();
+    if( mode=='localnew' ) {
+      name = $('#savelocalnewname').val();
+    } else if(mode=='localold') {
+      name = $('#savelocaloldname').val();
+    } else {
+      throw Error('Unknown save mode!');
+    }
+    // empty name
+    if( name=='' ) return;
+    // save to localstorage
+    lsave[name]=save64;
+    ls.setItem('jszipSaves',JSON.stringify(lsave));
+    // get back into game
+    $save.fadeOut();
+    step();
+  }
+  function restoreLocal() {
+    var e=restoreOpts, name, mode = $('input[type=radio]:checked',$restore).val();
+    if(mode=='localold') {
+      name = $('#restorelocaloldname').val();
+    } else {
+      throw Error('Unknown save mode!');
+    }
+
+    if(e==null) {
+      throw Error('No z_restore options available!');
+    }
+    FS.createDataFile('/', 'save.sav', base64dec(lsave[name]), true, false);
+    console.log('save.sav restored');
+    restoreOpts=null;
+    $restore.fadeOut();
+    zRestore(e.count,e.o0,e.o1,e.o2);
+    step();
   }
 
   // Start z-machine
