@@ -147,6 +147,8 @@ div.output, #inputline, #inputline>input, #statuswindow {
     , $restore = $('#restoredialog')
     , $statw = $('#statuswindow')
     , ls = window.localStorage || null
+    , lsave = {}   // copy of localStorage sagegames
+    , save64 = ''  // current savegame in base64
     , lineCallback = null;
 
   // hook key events up to input widget
@@ -185,6 +187,11 @@ div.output, #inputline, #inputline>input, #statuswindow {
 
   // hide input widget
   $('#inputline').hide();
+
+  // get saves from localStorage
+  if(ls) {
+    lsaves = JSON.parse(ls.getItem('jszipSaves')||'{}');
+  }
 
   // build save/restore widgets
   $save.hide();
@@ -277,7 +284,8 @@ div.output, #inputline, #inputline>input, #statuswindow {
   function taskSave() {
     $save.fadeIn();
     // base64 encode the save.sav tmp for download
-    $dload.attr('href','data:text/csv;base64,' + base64enc(FS.readFile('save.sav')) );
+    save64=base64enc(FS.readFile('save.sav'));
+    $dload.attr('href','data:text/csv;base64,'+save64);
   }
   function taskRestore() {
     // provide the save.sav tmp file
