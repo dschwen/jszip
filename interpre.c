@@ -123,10 +123,9 @@ int interpret(  )
                   /* Extended operand instructions */
 
                case 0x00:
-#ifdef EMSCIPTEN
-                 asm( "throw { name:'z_save', count:%0, o0:%1, o1:%2, o2:%3 }" :: "r"(count), "r"(operand[0]), "r"(operand[1]), "r"(operand[2]) );
-#else
                  z_save( count, operand[0], operand[1], operand[2] );
+#ifdef EMSCIPTEN
+                 asm( "throw { name:'z_save' }" :: );
 #endif
                   break;
                case 0x01:
@@ -446,10 +445,9 @@ int interpret(  )
                   /* z_nop */
                   break;
                case 0x05:
-#ifdef EMSCIPTEN
-                 asm( "throw { name:'z_save', count:0, o0:0, o1:0, o2:0 }" :: );
-#else
                   z_save( 0, 0, 0, 0 );
+#ifdef EMSCIPTEN
+                 asm( "throw { name:'z_save' }" :: );
 #endif
                   break;
                case 0x06:
