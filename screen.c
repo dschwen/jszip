@@ -296,6 +296,9 @@ void z_show_status( void )
       status_part[count] = &status_line[status_pos];
       write_string( " Time: " );
       print_time( load_variable( 17 ), load_variable( 18 ) );
+#ifdef EMSCRIPTEN
+      asm("window['jsFlushTo']('time')"::);
+#endif
       end_of_string[count++] = status_pos;
       status_line[status_pos++] = '\0';
    }
@@ -309,6 +312,9 @@ void z_show_status( void )
       status_part[count] = &status_line[status_pos];
       write_string( " Score: " );
       z_print_num( load_variable( 17 ) );
+#ifdef EMSCRIPTEN
+      asm("window['jsFlushTo']('score')"::);
+#endif
       end_of_string[count++] = status_pos;
       status_line[status_pos++] = '\0';
 
@@ -316,6 +322,9 @@ void z_show_status( void )
       status_part[count] = &status_line[status_pos];
       write_string( " Moves: " );
       z_print_num( load_variable( 18 ) );
+#ifdef EMSCRIPTEN
+      asm("window['jsFlushTo']('moves')"::);
+#endif
       end_of_string[count++] = status_pos;
       status_line[status_pos++] = '\0';
    }

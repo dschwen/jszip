@@ -26,6 +26,11 @@ div.output {
   margin-bottom: 0.2em;
   min-height: 0.5em;
 }
+div.echo {
+  margin-bottom: 0.2em;
+  min-height: 0.5em;
+  color: gray;
+}
 div.output, #inputline, #inputline>input, #statuswindow {
   font-family: serif;
   font-size: 12pt;
@@ -33,18 +38,29 @@ div.output, #inputline, #inputline>input, #statuswindow {
 #statuswindow {
   display: none;
   width: 100%;
-  padding: 0.5em;
   background-color: black;
   color: white;
   font-weight: bold;
   position: fixed;
   top: 0; left: 0;
+  min-height: 2em;
 }
-
+#statuswindow>span{
+  float: right;
+  padding-left: 1em;
+  display: none;
+  position: relative;
+  right: 0.5em;
+  top: 0.5em;
+}
 </style>
 </head>
 <body>
-<div id="statuswindow"></div>
+<div id="statuswindow">
+<span id="time">Time:</span>
+<span id="moves">Moves:</span>
+<span id="score">Score:</span>
+</div>
 <div id="inputline">
 <input id="input" type="text">
 <span class="prompt"><b>&gt;</b></span>
@@ -114,8 +130,18 @@ div.output, #inputline, #inputline>input, #statuswindow {
     var c,t='',p=s; 
     while(c=Module.getValue(p++, 'i8')) {
       writeChar(c);
+      t+=String.fromCharCode(c);
     } 
-    console.log('printstring',p-s,s,p);
+    console.log('printstring',p-s,s,p,t);
+  }
+  window['jsFlushTo'] = function(s) {
+    var c=$('#'+s);
+    if(out.buf=='') {
+      c.hide();
+    } else {
+      c.text(out.buf).show();
+      out.buf='';
+    }
   }
   window['jsBlankStatus'] = function() {
     console.log('blank_status()');
@@ -147,6 +173,9 @@ div.output, #inputline, #inputline>input, #statuswindow {
       $('#inputline').hide();
       lineCallback=null;
       if(h) clearTimeout(h);
+      
+      // echo input
+      $('#inputline').before($('<div class="echo"></div>').text('> '+text));
 
       // put text into buffer
       for(i=0;i<l;++i) {
