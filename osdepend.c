@@ -488,6 +488,7 @@ int get_file_name( char *file_name, char *default_name, int flag )
    if ( file_name[0] == '\0' )
       strcpy( file_name, default_name );
 
+#ifndef EMSCRIPTEN              /* in jszip we always write to the same file and copy the result afterwards */
 #if !defined(VMS)               /* VMS has file version numbers, so cannot overwrite */
 
    /* Check if we are going to overwrite the file */
@@ -534,7 +535,7 @@ int get_file_name( char *file_name, char *default_name, int flag )
       }
    }
 #endif /* !defined(VMS) */
-
+#endif /* EMSCRIPTEN */
    /* Record the file name if it was OK */
 
    if ( status == 0 )

@@ -53,24 +53,84 @@ div.output, #inputline, #inputline>input, #statuswindow {
   right: 0.5em;
   top: 0.5em;
 }
+.dialog {
+  position: fixed;
+  top: 1em;
+  border: 1px solid black;
+  box-shadow: 3px 3px 15px rgba(0,0,0,0.3);
+  padding: 0.5em;
+  background-color: white;
+}
+.dialog>h1 {
+  font-size:15pt;
+  margin: 0;
+}
+.dialog>div>h2 {
+  font-size:13pt;
+}
+.option {
+  position: relative;
+  margin-left: 2em;
+  min-height: 2em;
+}
+.option>input[type=radio] {
+  position: absolute;
+  left: -2em;
+  top: 0;
+}
+.dialog>button {
+  float: right;
+}
 </style>
 </head>
 <body>
+
 <div id="statuswindow">
 <span id="time">Time:</span>
 <span id="moves">Moves:</span>
 <span id="score">Score:</span>
 </div>
+
 <div id="inputline">
-<input id="input" type="text">
-<span class="prompt"><b>&gt;</b></span>
-</span>
+  <input id="input" type="text">
+  <span class="prompt"><b>&gt;</b></span>
+</div>
+
+<div class="dialog" id="savedialog">
+  <h1>Save game&hellip;</h1>
+  <div class="localsave">
+    <h2>&hellip;in this browser</h2>
+    <div class="option">
+      <input type="radio" name="savetype"/>
+    </div>
+  </div>
+  <div class="filesave">
+    <h2>&hellip;on this computer</h2>
+    <div class="option">
+      <input type="radio" name="savetype"/>
+    </div>
+  </div>
+  <div class="cloudsave">
+    <h2>&hellip;in the cloud</h2>
+    <div class="option">
+      <input type="radio" name="savetype"/>
+    </div>
+  </div>
+  <button>Save</button>
+</div>
+
+<div class="dialog" id="restoredialog">
+</div>
+
 <script>
 (function(){
   var history = ['south','examine house','open door','west','lift rug']
     , hindex = history.length
     , $input = $('#input')
+    , $save = $('#savedialog')
+    , $restore = $('#restoredialog')
     , $statw = $('#statuswindow')
+    , ls = window.localStorage || null
     , lineCallback = null;
 
   // hook key events up to input widget
@@ -109,6 +169,10 @@ div.output, #inputline, #inputline>input, #statuswindow {
 
   // hide input widget
   $('#inputline').hide();
+
+  // build save/restore widgets
+  //$save.hide();
+  $restore.hide();
 
   // functions to be called from the c code
   var out = window['output']={ buf:'', text: true }
@@ -190,11 +254,21 @@ div.output, #inputline, #inputline>input, #statuswindow {
       h = setTimeout(function(){ jsrGetLine(e.cbuf, e.buffer, 0, -1, e.timeout, e.action_routine ); step(); },t*1000);
     }
   }
+  function taskSave() {
+    // do something with the save.sav tmp file
+  }
+  function taskRestore() {
+    // provide the save.sav tmp file
+    zRestore(e.count,e.o0,e.o1,e.o2)
+    step();
+  }
+
   
   // exported functions
   var spinupJS  = Module.cwrap('spinupJS', 'number', ['string'])
     , interpret = Module.cwrap('interpret', 'number')
-    , jsrGetLine = Module.cwrap('jsrGetLine', 'number', ['number','number','number','number','number','number']);
+    , jsrGetLine = Module.cwrap('jsrGetLine', 'number', ['number','number','number','number','number','number'])
+    , zRestore = Module.cwrap('z_restore', 'number', ['number','number','number','number']);
 
   // helper functions 
   function scrollBottom() {
@@ -214,6 +288,12 @@ div.output, #inputline, #inputline>input, #statuswindow {
         case 'getLine': 
           taskGetLine(e); 
           break;
+        case 'z_save':
+          taskSave();
+          break
+        case 'z_restore':
+          taskRestore(e);
+          break
         default:
           throw e;
       }
