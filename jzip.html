@@ -169,7 +169,7 @@ div.output, #inputline, #inputline>input, #statuswindow {
 
 <script>
 (function(){
-  var history = []
+  var history = ['save','restore']
     , hindex = history.length
     , $input = $('#input')
     , $save = $('#savedialog')
@@ -330,6 +330,7 @@ div.output, #inputline, #inputline>input, #statuswindow {
     $save.fadeIn();
     // base64 encode the save.sav tmp for download
     save64=base64enc(FS.readFile('save.sav'));
+    FS.unlink('save.sav');
     $dload.attr('href','data:text/csv;base64,'+save64);
   }
   function taskRestore(e) {
@@ -375,12 +376,12 @@ div.output, #inputline, #inputline>input, #statuswindow {
     return output;
   }
   function base64dec(s) {
-    var e={},i,b=0,c,x,l=0,a,r='',w=String.fromCharCode,L=s.length
+    var e={},i,b=0,c,x,l=0,a,r=[],w=String.fromCharCode,L=s.length
       , A="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
     for(i=0;i<64;i++){e[A.charAt(i)]=i;}
     for(x=0;x<L;x++){
       c=e[s.charAt(x)];b=(b<<6)+c;l+=6;
-      while(l>=8){((a=(b>>>(l-=8))&0xff)||(x<(L-2)))&&(r+=w(a));}
+      while(l>=8){((a=(b>>>(l-=8))&0xff)||(x<(L-2)))&&(r.push(a));}
     }
     return r;
   }
@@ -429,7 +430,9 @@ div.output, #inputline, #inputline>input, #statuswindow {
     console.log('save.sav restored');
     restoreOpts=null;
     $restore.fadeOut();
+    console.log(e);
     zRestore(e.count,e.o0,e.o1,e.o2);
+    console.log('back from z_restore');
     step();
   }
   function restoreFile(fl) {
@@ -439,11 +442,14 @@ div.output, #inputline, #inputline>input, #statuswindow {
     // instantiate a new FileReader
     var reader = new FileReader();
     reader.onload=function(e) {
+      FS.unlink('save.sav');
       FS.createDataFile('/', 'save.sav', e.target.result, true, true);
       console.log('save.sav restored');
       restoreOpts=null;
       $restore.fadeOut();
+      console.log(e);
       zRestore(e.count,e.o0,e.o1,e.o2);
+      console.log('back from z_restore');
       step();
     }
     reader.readAsBinaryString(f);

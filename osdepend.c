@@ -556,11 +556,14 @@ int get_file_name( char *file_name, char *default_name, int flag )
 
 void fatal( const char *s )
 {
-
+#ifdef EMSCRIPTEN
+asm("console.log('fatal error!')"::);
+#else
    reset_screen(  );
    fprintf( stderr, "\nFatal error: %s (PC = 0x%08lX)\n", s, pc );
 #ifdef DEBUG_TERPRE
    fprintf( stdout, "\nFatal error: %s (PC = 0x%08lX)\n", s, pc );
+#endif
 #endif
    exit( 1 );
 
