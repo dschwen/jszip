@@ -35,6 +35,19 @@ div.output, #inputline, #inputline>input, #statuswindow {
   font-family: serif;
   font-size: 12pt;
 }
+div.output.reverse {
+  color: white;
+  background-color: black;
+}
+div.output.bold {
+  font-weight: bold;
+}
+div.output.emph {
+  font-style: italic;
+}
+div.output.fixed {
+  font-family: monospace;
+}
 #statuswindow {
   display: none;
   width: 100%;
@@ -43,16 +56,21 @@ div.output, #inputline, #inputline>input, #statuswindow {
   font-weight: bold;
   position: fixed;
   top: 0; left: 0;
-  min-height: 2em;
+  min-height: 1em;
+  padding: 0.5em 0 0.5em 0;
 }
-#statuswindow>span{
+#statuswindow>span.builtin {
   float: right;
-  padding-left: 1em;
+  padding-right: 1em;
   display: none;
-  position: relative;
-  right: 0.5em;
-  top: 0.5em;
 }
+
+#statuswindow>span.row {
+  position: absolute;
+  padding-left: 1em;
+  left:0;
+}
+
 .dialog {
   position: fixed;
   top: 1em;
@@ -94,9 +112,9 @@ div.output, #inputline, #inputline>input, #statuswindow {
 <body>
 
 <div id="statuswindow">
-<span id="time">Time:</span>
-<span id="moves">Moves:</span>
-<span id="score">Score:</span>
+<span class="builtin" id="time">Time:</span>
+<span class="builtin" id="moves">Moves:</span>
+<span class="builtin" id="score">Score:</span>
 </div>
 
 <div id="inputline">
@@ -174,6 +192,7 @@ div.output, #inputline, #inputline>input, #statuswindow {
     , $dload = $('#downloadsave')
     , $restore = $('#restoredialog')
     , $statw = $('#statuswindow')
+    , srows = [], s_row=1, s_col=1
     , ls = window.localStorage || null
     , lsave = {}                        // copy of localStorage sagegames
     , saveString = ''                   // current savegame stringified
@@ -181,6 +200,7 @@ div.output, #inputline, #inputline>input, #statuswindow {
     , hindex = history.length
     , hmax = 100                        // size of command history
     , restoreOpts = null
+    , keyCallback = null
     , lineCallback = null;
 
   // hook key events up to input widget
@@ -227,11 +247,16 @@ div.output, #inputline, #inputline>input, #statuswindow {
   // hook key events up to document
   $(document).keydown(function(e) {
     console.log(e.keyCode);
-    switch(e.keyCode) {
-      case 27: // ESC
-        // if dialog open
-        $('.dialog').fadeOut();
-        step();
+    if( keyCallback ) {
+      keyCallback(e.keyCode);
+    } else {
+      switch(e.keyCode) {
+        case 27: // ESC
+          // if dialog open
+          $('.dialog').fadeOut();
+          step();
+          break;
+      }
     }
   });
 
@@ -264,16 +289,22 @@ div.output, #inputline, #inputline>input, #statuswindow {
   // file upload
   $('#uploadfile').change(function(e){restoreFile(e.target.files)});
 
+
   // functions to be called from the c code
-  var out = window['output']={ buf:'', text: true }
+  var out = window['output']={ buf:'', text: true, reverse: false, bold: false, emph: false, fixed: false }
     , argstore = window['argstore']={};
   var writeChar = window['jsWriteChar'] = function(c) {
+    console.log('jsWriteChar',c,String.fromCharCode(c));
     if(c==13 || c==10 ) {
       if(out.text) {
-        $('#inputline').before($('<div class="output"></div>').text(out.buf));
+        var $line = $('<div class="output"></div>').text(out.buf).insertBefore($('#inputline'));
+        if( out.reverse ) $line.addClass('reverse');
+        if( out.bold ) $line.addClass('bold');
+        if( out.emph ) $line.addClass('emph');
+        if( out.fixed ) $line.addClass('fixed');
         scrollBottom();
       } else {
-        $statw.text(out.buf);
+        srows[s_row-1].text(out.buf);
       }
       out.buf='';
     } else {
@@ -281,12 +312,13 @@ div.output, #inputline, #inputline>input, #statuswindow {
     }
   }
   window['jsPrintString'] = function(s) {
-    var c,t='',p=s; 
+    var c,t='',p=s,l=[]; 
     while(c=Module.getValue(p++, 'i8')) {
       writeChar(c);
       t+=String.fromCharCode(c);
+      l.push(c)
     } 
-    console.log('printstring',p-s,s,p,t);
+    if(l.length>0) console.log('printstring',p-s,s,p,t,l);
   }
   window['jsFlushTo'] = function(s) {
     var c=$('#'+s);
@@ -301,16 +333,33 @@ div.output, #inputline, #inputline>input, #statuswindow {
     console.log('blank_status()');
   }
   window['jsMoveCursor'] = function(row,col) {
-    console.log(out.text,row,col);
+    console.log(out.text,row,col,out.buf);
+    if( !out.text ) {
+      s_row=row;
+      s_col=col;
+    }
   }
   window['jsSplitWindow'] = function(lines) {
     $('body').css('padding-top',(lines+1)+'em');
     if(lines) {
       $statw.show().css('height',lines+'em');
+      $('.row',$statw).remove();
+      srows=[];
+      for(var i=0; i<lines; ++i ) {
+        srows[i] = $('<span class="row"></span>').css('top',i+'.5em').attr('id','row'+(i+1)).appendTo($statw);
+      }
     } else {
       $statw.hide();
     } 
   }
+  window['jsSetAttribute'] = function( normal,reverse, bold, emph, fixed ) {
+    out.reverse = ~~reverse;
+    out.bold    = ~~bold;
+    out.emph    = ~~emph;
+    out.fixed   = ~~fixed;
+    console.log('jsSetAttribute',out);
+  }
+
 
   // tasks
   function taskGetLine(e) {
@@ -342,7 +391,36 @@ div.output, #inputline, #inputline>input, #statuswindow {
 
     // set up a timeout
     if(t>0) {
-      h = setTimeout(function(){ jsrGetLine(e.cbuf, e.buffer, 0, -1, e.timeout, e.action_routine ); step(); },t*1000);
+      h = setTimeout(function(){ 
+        $('#inputline').hide();
+        $input.blur();
+        lineCallback=null;
+        jsrGetLine(e.cbuf, e.buffer, 0, -1, e.timeout, e.action_routine ); 
+        step(); 
+      },t*1000);
+    }
+  }
+  function taskInputCharacter(e) {
+    var t=e.timeout,h=null;
+
+    // display readkey bar
+
+    keyCallback = function(c) {
+      //clean up
+      keyCallback = null;
+      /* hide readkey bar */
+      if(h) clearTimeout(h);
+
+      jsrInputCharacter(c,t);
+      step();
+    }
+    // set up a timeout
+    if(t>0) {
+      h = setTimeout(function(){ 
+        keyCallback = null;
+        jsrInputCharacter(-1,t); 
+        step(); 
+      },t*1000);
     }
   }
   function taskSave() {
@@ -366,6 +444,7 @@ div.output, #inputline, #inputline>input, #statuswindow {
   var spinupJS  = Module.cwrap('spinupJS', 'number', ['string'])
     , interpret = Module.cwrap('interpret', 'number')
     , jsrGetLine = Module.cwrap('jsrGetLine', 'number', ['number','number','number','number','number','number'])
+    , jsrInputCharacter = Module.cwrap('jsrInputCharacter', 'number', ['number','number'])
     , zRestore = Module.cwrap('z_restore', 'number', ['number','number','number','number']);
 
   // helper functions 
@@ -476,6 +555,7 @@ div.output, #inputline, #inputline>input, #statuswindow {
 
   // Start z-machine
   spinupJS('zork2.z3');
+  //spinupJS('curses.z5');
 
   // call interpreter
   function step() {
@@ -486,6 +566,9 @@ div.output, #inputline, #inputline>input, #statuswindow {
       switch(e.task||'') {
         case 'getLine': 
           taskGetLine(e); 
+          break;
+        case 'inputCharacter': 
+          taskInputCharacter(e); 
           break;
         case 'z_save':
           taskSave();

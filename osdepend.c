@@ -699,6 +699,7 @@ int print_status( int argc, char *argv[] )
 
 void set_font( int font_type )
 {
+  asm("console.log('set_font()')"::);
    UNUSEDVAR( font_type );
 }                               /* set_font */
 

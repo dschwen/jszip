@@ -473,15 +473,15 @@ void restore_cursor_position(  )
 
 void set_attribute( int attribute )
 {
-   EM_ASM( console.log('set_attribute()'); );
-#if defined HARD_COLORS
+   asm( "window['jsSetAttribute'](%0,%1,%2,%3,%4)" :: "r"(attribute==NORMAL), "r"(attribute & REVERSE), "r"(attribute & BOLD), "r"(attribute & EMPHASIS), "r"(attribute & FIXED_FONT) );
+#if 0
    static int emph = 0, rev = 0;
 
    if ( attribute == NORMAL )
    {
       if ( use_bg_color )
       {
-         printf( "\x1B[0m" );
+         //printf( "\x1B[0m" );
       }
       else
       {
@@ -519,25 +519,6 @@ void set_attribute( int attribute )
    }
 
 
-#else
-
-   if ( attribute == NORMAL )
-   {
-      tputs( ME, 1, outc );
-      tputs( UE, 1, outc );
-   }
-
-   if ( attribute & REVERSE )
-      tputs( MR, 1, outc );
-
-   if ( attribute & BOLD )
-      tputs( MD, 1, outc );
-
-   if ( attribute & EMPHASIS )
-      tputs( US, 1, outc );
-
-   if ( attribute & FIXED_FONT )
-      ;
 #endif
 
 }                               /* set_attribute */

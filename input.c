@@ -100,22 +100,42 @@ void z_read_char( int argc, zword_t * argv )
          /* Read a character with a timeout. If the input timed out then
           * call the timeout action routine. If the return status from the
           * timeout routine was 0 then try to read a character again */
+#ifdef EMSCRIPTEN
+         asm("window['argstore']['a0']=%0" : : "r"(arg_list[0]) );
+         asm("throw { task: 'inputCharacter', timeout: %0 }" :: "r"(( int ) argv[1]) );
+      }
+   }
 
+   store_operand( (zword_t)c );
+}
+#else
          do
          {
             flush_buffer( FALSE );
             c = input_character( ( int ) argv[1] );
          }
          while ( c == -1 && z_call( 1, arg_list, ASYNC ) == 0 );
+#endif
+#ifdef EMSCRIPTEN
+void jsrInputCharacter(int c, int timeout)
+{
+  zword_t arg_list[2] = {0,0};
+  asm("window['argstore']['a0']" : "=r"(arg_list[0]) : );
 
+  if( c==-1 && z_call( 1, arg_list, ASYNC ) == 0 ) {
+    asm("throw { task: 'inputCharacter', timeout: %0 }" :: "r"(timeout));
+  }
+#endif
          /* Fail call if input timed out */
 
          if ( c == -1 )
             c = 0;
          else
             record_key( c );
+#ifndef EMSCRIPTEN
       }
    }
+#endif
 
    store_operand( (zword_t)c );
 
