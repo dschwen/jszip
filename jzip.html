@@ -221,6 +221,18 @@ div.output, #inputline, #inputline>input, #statuswindow {
         }
         break;
     }
+    e.stopPropagation();
+  });
+
+  // hook key events up to document
+  $(document).keydown(function(e) {
+    console.log(e.keyCode);
+    switch(e.keyCode) {
+      case 27: // ESC
+        // if dialog open
+        $('.dialog').fadeOut();
+        step();
+    }
   });
 
   // hide input widgets
@@ -313,6 +325,7 @@ div.output, #inputline, #inputline>input, #statuswindow {
       
       // clean up
       $('#inputline').hide();
+      $input.blur();
       lineCallback=null;
       if(h) clearTimeout(h);
       
@@ -439,12 +452,9 @@ div.output, #inputline, #inputline>input, #statuswindow {
       throw Error('No z_restore options available!');
     }
     FS.createDataFile('/', 'save.sav', unstringify(lsave[name]), true, true);
-    console.log('save.sav restored');
     restoreOpts=null;
     $restore.fadeOut();
-    console.log(e);
     zRestore(e.count,e.o0,e.o1,e.o2);
-    console.log('back from z_restore');
     step();
   }
   function restoreFile(fl) {
@@ -456,12 +466,9 @@ div.output, #inputline, #inputline>input, #statuswindow {
     reader.onload=function(e) {
       FS.unlink('save.sav');
       FS.createDataFile('/', 'save.sav', e.target.result, true, true);
-      console.log('save.sav restored');
       restoreOpts=null;
       $restore.fadeOut();
-      console.log(e);
       zRestore(e.count,e.o0,e.o1,e.o2);
-      console.log('back from z_restore');
       step();
     }
     reader.readAsBinaryString(f);
