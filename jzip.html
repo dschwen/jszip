@@ -169,16 +169,17 @@ div.output, #inputline, #inputline>input, #statuswindow {
 
 <script>
 (function(){
-  var history = ['save','restore']
-    , hindex = history.length
-    , $input = $('#input')
+  var $input = $('#input')
     , $save = $('#savedialog')
     , $dload = $('#downloadsave')
     , $restore = $('#restoredialog')
     , $statw = $('#statuswindow')
     , ls = window.localStorage || null
-    , lsave = {}   // copy of localStorage sagegames
-    , saveString = ''  // current savegame stringified
+    , lsave = {}                        // copy of localStorage sagegames
+    , saveString = ''                   // current savegame stringified
+    , history = ( ls && JSON.parse(ls.getItem('jszipHistory')||'[]') ) || []
+    , hindex = history.length
+    , hmax = 100                        // size of command history
     , restoreOpts = null
     , lineCallback = null;
 
@@ -205,6 +206,12 @@ div.output, #inputline, #inputline>input, #statuswindow {
         if (v!=='') {
           hindex = history.length;
           history[hindex++] = v; 
+          // only keep the last hmax commands in the history
+          if(hindex>hmax) {
+            history=history.slice(-hmax);
+            hindex=hmax;
+          }
+          ls.setItem('jszipHistory',JSON.stringify(history))
         }
         if(lineCallback) {
           $input.val('');
