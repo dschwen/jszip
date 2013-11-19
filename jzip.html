@@ -155,7 +155,7 @@ div.output, #inputline, #inputline>input, #statuswindow {
   <div class="filerestore">
     <h2>&hellip;from this computer</h2>
     <div class="option">
-      <a download="save.sav" id="downloadsave" href="">Upload save file&hellip;</a>
+      <input type="file" id="uploadfile"/>
     </div>
   </div>
   <div class="cloudrestore">
@@ -242,6 +242,8 @@ div.output, #inputline, #inputline>input, #statuswindow {
   // save buttons
   $('.localsave button',$save).click(saveLocal);
   $('.localrestore button',$restore).click(restoreLocal);
+  // file upload
+  $('#uploadfile').change(function(e){restoreFile(e.target.files)});
 
   // functions to be called from the c code
   var out = window['output']={ buf:'', text: true }
@@ -429,6 +431,22 @@ div.output, #inputline, #inputline>input, #statuswindow {
     $restore.fadeOut();
     zRestore(e.count,e.o0,e.o1,e.o2);
     step();
+  }
+  function restoreFile(fl) {
+    if(fl.length!=1) return;
+    var f=fl[0];
+
+    // instantiate a new FileReader
+    var reader = new FileReader();
+    reader.onload=function(e) {
+      FS.createDataFile('/', 'save.sav', e.target.result, true, true);
+      console.log('save.sav restored');
+      restoreOpts=null;
+      $restore.fadeOut();
+      zRestore(e.count,e.o0,e.o1,e.o2);
+      step();
+    }
+    reader.readAsBinaryString(f);
   }
 
   // Start z-machine
