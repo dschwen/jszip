@@ -423,7 +423,7 @@ div.output, #inputline, #inputline>input, #statuswindow {
     if(e==null) {
       throw Error('No z_restore options available!');
     }
-    FS.createDataFile('/', 'save.sav', base64dec(lsave[name]), true, false);
+    FS.createDataFile('/', 'save.sav', base64dec(lsave[name]), true, true);
     console.log('save.sav restored');
     restoreOpts=null;
     $restore.fadeOut();
