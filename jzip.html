@@ -178,7 +178,7 @@ div.output, #inputline, #inputline>input, #statuswindow {
     , $statw = $('#statuswindow')
     , ls = window.localStorage || null
     , lsave = {}   // copy of localStorage sagegames
-    , save64 = ''  // current savegame in base64
+    , saveString = ''  // current savegame stringified
     , restoreOpts = null
     , lineCallback = null;
 
@@ -329,9 +329,10 @@ div.output, #inputline, #inputline>input, #statuswindow {
     fillFileSelect('#savelocaloldname');
     $save.fadeIn();
     // base64 encode the save.sav tmp for download
-    save64=base64enc(FS.readFile('save.sav'));
+    $dload.attr('href','data:text/csv;base64,'+base64enc(FS.readFile('save.sav')));
+    // sringify for localStorage
+    saveString = stringify(FS.readFile('save.sav'));
     FS.unlink('save.sav');
-    $dload.attr('href','data:text/csv;base64,'+save64);
   }
   function taskRestore(e) {
     fillFileSelect('#restorelocaloldname');
@@ -375,15 +376,19 @@ div.output, #inputline, #inputline>input, #statuswindow {
     }
     return output;
   }
-  function base64dec(s) {
-    var e={},i,b=0,c,x,l=0,a,r=[],w=String.fromCharCode,L=s.length
-      , A="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-    for(i=0;i<64;i++){e[A.charAt(i)]=i;}
-    for(x=0;x<L;x++){
-      c=e[s.charAt(x)];b=(b<<6)+c;l+=6;
-      while(l>=8){((a=(b>>>(l-=8))&0xff)||(x<(L-2)))&&(r.push(a));}
+  function stringify(l) {
+    var i, t='';
+    for(i=0; i<l.length; ++i ) {
+      t+=String.fromCharCode(l[i]+65);
     }
-    return r;
+    return t;
+  }
+  function unstringify(t) {
+    var i, l=[];
+    for(i=0; i<t.length; ++i ) {
+      l.push(t.charCodeAt(i)-65);
+    }
+    return l;
   }
   function fillFileSelect(s) {
     var g,$s=$(s),n=true;
@@ -409,7 +414,7 @@ div.output, #inputline, #inputline>input, #statuswindow {
     // empty name
     if( name=='' ) return;
     // save to localstorage
-    lsave[name]=save64;
+    lsave[name] = saveString;
     ls.setItem('jszipSaves',JSON.stringify(lsave));
     // get back into game
     $save.fadeOut();
@@ -426,7 +431,7 @@ div.output, #inputline, #inputline>input, #statuswindow {
     if(e==null) {
       throw Error('No z_restore options available!');
     }
-    FS.createDataFile('/', 'save.sav', base64dec(lsave[name]), true, true);
+    FS.createDataFile('/', 'save.sav', unstringify(lsave[name]), true, true);
     console.log('save.sav restored');
     restoreOpts=null;
     $restore.fadeOut();
