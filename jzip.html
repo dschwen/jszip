@@ -129,7 +129,7 @@ div.output.fixed {
 <div class="dialog" id="savedialog">
   <h1>Save game&hellip;</h1>
   <div class="localsave">
-    <h2>&hellip;in this browser</h2>
+    <h2>&hellip;on this browser</h2>
     <div class="option">
       <input type="radio" name="savetype" value="localnew" checked/>
       <input type="text" id="savelocalnewname" placeholder="New File"/>
@@ -137,7 +137,7 @@ div.output.fixed {
       <div class="haslocal">
       <input type="radio" name="savetype" value="localold"/>
       <select id="savelocaloldname">
-      <option>awesome_save.sav</option>
+      <option>Loading...</option>
       </select>
       </div>
       <br/>
@@ -150,10 +150,19 @@ div.output.fixed {
       <a download="save.sav" id="downloadsave" href="">Download save file&hellip;</a>
     </div>
   </div>
-  <div class="cloudsave">
-    <h2>&hellip;in the cloud</h2>
+  <div class="drivesave">
+    <h2>&hellip;on Google Drive</h2>
     <div class="option drive">
-      <input type="radio" name="savetype"/>
+      <input type="radio" name="savetype" value="drivenew" checked/>
+      <input type="text" id="savedrivenewname" placeholder="New File"/>
+      <br/>
+      <div class="hasdrive">
+      <input type="radio" name="savetype" value="driveold"/>
+      <select id="savedriveoldname">
+      <option>Loading...</option>
+      </select>
+      </div>
+      <br/>
       <button>Save</button>
     </div>
     <div class="option auth">
@@ -183,11 +192,11 @@ div.output.fixed {
       <button>Restore</button>
     </div>
   </div>
-  <div class="cloudrestore">
-    <h2>&hellip;on Google Drive</h2>
+  <div class="driverestore hasdrive">
+    <h2>&hellip;from Google Drive</h2>
     <div class="option drive">
-      <input type="radio" name="restoretype" value="cloudold"/>
-      <select id="restorecloudoldname">
+      <input type="radio" name="restoretype" value="driveold"/>
+      <select id="restoredriveoldname">
       <option>awesome_save.sav</option>
       </select>
       <button>Restore</button>
@@ -207,7 +216,8 @@ div.output.fixed {
     , $statw = $('#statuswindow')
     , srows = [], s_row=1, s_col=1
     , ls = window.localStorage || null
-    , lsave = {}                        // copy of localStorage sagegames
+    , lsave = {}                        // copy of localStorage savegames
+    , dsave = {}                        // list of google drive savegames
     , saveString = ''                   // current savegame stringified
     , history = ( ls && JSON.parse(ls.getItem('jszipHistory')||'[]') ) || []
     , hindex = history.length
@@ -297,8 +307,10 @@ div.output.fixed {
   $('#savelocaloldname').focus(function(){$('#savedialog input[type=radio]').val(['localold']);});
   $('#savelocalnewname').focus(function(){$('#savedialog input[type=radio]').val(['localnew']);});
   $('#restorelocaloldname').focus(function(){$('input[type=radio]',$restore).val(['localold']);});
-  $('#restorelocalnewname').focus(function(){$('input[type=radio]',$restore).val(['localnew']);});
-  // save buttons
+  $('#savedriveoldname').focus(function(){$('#savedialog input[type=radio]').val(['driveold']);});
+  $('#savedrivenewname').focus(function(){$('#savedialog input[type=radio]').val(['drivenew']);});
+  $('#restoredriveoldname').focus(function(){$('input[type=radio]',$restore).val(['driveold']);});
+  // save/restore buttons
   $('.localsave button',$save).click(saveLocal);
   $('.localrestore button',$restore).click(restoreLocal);
   $('.filerestore button',$restore).click(function(){restoreFile($('#uploadfile')[0].files)});
@@ -516,6 +528,18 @@ div.output.fixed {
     if(n) { $('.haslocal').hide() }
     else  { $('.haslocal').show() }
   }
+  function fillDriveSelect(s) {
+    var g,$s=$(s),n=true;
+    $s.empty();
+    for(g in dsave) {
+      if( dsave.hasOwnProperty(g) ) {
+        $s.append($('<option></option>').text(dsave[g]).attr('value',g));
+        n=false;
+      }
+    }
+    if(n) { $('.hasdrive').hide() }
+    else  { $('.hasdrive').show() }
+  }
   function saveLocal() {
     var name, mode = $('#savedialog input[type=radio]:checked').val();
     if( mode=='localnew' ) {
@@ -598,12 +622,16 @@ div.output.fixed {
           request = gapi.client.drive.files.list({'pageToken': nextPageToken });
           retrievePageOfFiles(request, result);
         } else {
-          console.log(result);
+          //console.log(result);
+          // retrieved result, build dsave list
+          dsave = {};
           for(var i=0; i<result.length; ++i ) {
             if( result[i].mimeType == 'application/octet-stream' ) {
-              console.log(result[i].id,result[i].title);
+              dsave[result[i].id]=result[i].title;
             }
           }
+          fillDriveSelect('#savedriveoldname');
+          fillDriveSelect('#restoredriveoldname');
         }
       });
     }
