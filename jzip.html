@@ -180,6 +180,8 @@ div.output.fixed {
     <h2>&hellip;from this computer</h2>
     <div class="option">
       <input type="file" id="uploadfile"/>
+      <br/>
+      <button>Restore</button>
     </div>
   </div>
   <div class="cloudrestore">
@@ -292,15 +294,13 @@ div.output.fixed {
   // save buttons
   $('.localsave button',$save).click(saveLocal);
   $('.localrestore button',$restore).click(restoreLocal);
-  // file upload
-  $('#uploadfile').change(function(e){restoreFile(e.target.files)});
-
+  $('.filerestore button',$restore).click(function(){restoreFile($('#uploadfile')[0].files)});
 
   // functions to be called from the c code
   var out = window['output']={ buf:'', text: true, reverse: false, bold: false, emph: false, fixed: false }
     , argstore = window['argstore']={};
   var writeChar = window['jsWriteChar'] = function(c) {
-    console.log('jsWriteChar',c,String.fromCharCode(c));
+    //console.log('jsWriteChar',c,String.fromCharCode(c));
     if(c==13 || c==10 ) {
       if(out.text) {
         var $line = $('<div class="output"></div>').text(out.buf).insertBefore($('#inputline'));
@@ -551,11 +551,11 @@ div.output.fixed {
     // instantiate a new FileReader
     var reader = new FileReader();
     reader.onload=function(e) {
-      FS.unlink('save.sav');
       FS.createDataFile('/', 'save.sav', e.target.result, true, true);
       restoreOpts=null;
       $restore.fadeOut();
       zRestore(e.count,e.o0,e.o1,e.o2);
+      FS.unlink('save.sav');
       step();
     }
     reader.readAsBinaryString(f);
