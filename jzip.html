@@ -92,6 +92,7 @@ div.output.fixed {
 .dialog>div>h2 {
   font-size:13pt;
   margin: 0.5em 0 0 0;
+  clear: both
 }
 .option {
   position: relative;
@@ -109,10 +110,7 @@ div.output.fixed {
 .option>button {
   float: right;
 }
-.cloudsave { display: none }
-.cloudrestore { display: none }
-
-.localsave { /*display: none */ }
+.option.drive { display: none }
 </style>
 </head>
 <body>
@@ -144,7 +142,6 @@ div.output.fixed {
       </div>
       <br/>
       <button>Save</button>
-      <br/>
     </div>
   </div>
   <div class="filesave">
@@ -155,9 +152,12 @@ div.output.fixed {
   </div>
   <div class="cloudsave">
     <h2>&hellip;in the cloud</h2>
-    <div class="option">
+    <div class="option drive">
       <input type="radio" name="savetype"/>
       <button>Save</button>
+    </div>
+    <div class="option auth">
+      <button>Sign in with Google</button>
     </div>
   </div>
 </div>
@@ -173,7 +173,6 @@ div.output.fixed {
       </select>
       <br/>
       <button>Restore</button>
-      <br/>
     </div>
   </div>
   <div class="filerestore">
@@ -185,10 +184,16 @@ div.output.fixed {
     </div>
   </div>
   <div class="cloudrestore">
-    <h2>&hellip;in the cloud</h2>
-    <div class="option">
-      <input type="radio" name="restoretype"/>
+    <h2>&hellip;on Google Drive</h2>
+    <div class="option drive">
+      <input type="radio" name="restoretype" value="cloudold"/>
+      <select id="restorecloudoldname">
+      <option>awesome_save.sav</option>
+      </select>
       <button>Restore</button>
+    </div>
+    <div class="option auth">
+      <button>Sign in with Google</button>
     </div>
   </div>
 </div>
@@ -209,7 +214,9 @@ div.output.fixed {
     , hmax = 100                        // size of command history
     , restoreOpts = null
     , keyCallback = null
-    , lineCallback = null;
+    , lineCallback = null
+    , CLIENT_ID = '961409091716-f13l7n45n8u0uvkjqc9vjjddndd40jgs.apps.googleusercontent.com'
+    , SCOPES = 'https://www.googleapis.com/auth/drive';
 
   // hook key events up to input widget
   $input.focus().keydown(function(e) { 
@@ -561,7 +568,47 @@ div.output.fixed {
     reader.readAsBinaryString(f);
   }
   window['googleAPILoaded'] = function(){
-    console.log("Google API loaded.");
+    setTimeout(checkAuth, 1);
+  }
+  function checkAuth() {
+    gapi.auth.authorize( { 'client_id': CLIENT_ID, 'scope': SCOPES, 'immediate': true}, handleAuthResult);
+  }
+  function handleAuthResult(authResult) {
+    if (authResult && !authResult.error) {
+      // Access token has been successfully retrieved, requests can be sent to the API.
+      $('.option.drive').show();
+      $('.option.auth').hide();
+      // fetch list of files
+      gapi.client.load('drive', 'v2', function() {
+        console.log("Google Drive API loaded.");
+        retrieveAllFiles();
+      });
+    } else {
+      $('.option.auth button').click(function() {
+        gapi.auth.authorize( {'client_id': CLIENT_ID, 'scope': SCOPES, 'immediate': false}, handleAuthResult);
+      });
+    }
+  }
+  function retrieveAllFiles() {
+    var retrievePageOfFiles = function(request, result) {
+      request.execute(function(resp) {
+        result = result.concat(resp.items);
+        var nextPageToken = resp.nextPageToken;
+        if (nextPageToken) {
+          request = gapi.client.drive.files.list({'pageToken': nextPageToken });
+          retrievePageOfFiles(request, result);
+        } else {
+          console.log(result);
+          for(var i=0; i<result.length; ++i ) {
+            if( result[i].mimeType == 'application/octet-stream' ) {
+              console.log(result[i].id,result[i].title);
+            }
+          }
+        }
+      });
+    }
+    var initialRequest = gapi.client.drive.files.list();
+    retrievePageOfFiles(initialRequest, []);
   }
 
   // Start z-machine
