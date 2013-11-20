@@ -25,11 +25,13 @@
 div.output {
   margin-bottom: 0.2em;
   min-height: 0.5em;
+  background-color: white;
 }
 div.echo {
   margin-bottom: 0.2em;
   min-height: 0.5em;
   color: gray;
+  background-color: white;
 }
 div.output, #inputline, #inputline>input, #statuswindow {
   font-family: serif;
@@ -455,7 +457,7 @@ div.output.fixed {
 
   // helper functions 
   function scrollBottom() {
-    $('body')[0].scrollTop=$('body').height()
+    $('body').hide().show(0)[0].scrollTop=$('body').height()
   }
   function base64enc(file) {
     // http://www.webtoolkit.info/javascript-base64.html
