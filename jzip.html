@@ -558,6 +558,9 @@ div.output.fixed {
     }
     reader.readAsBinaryString(f);
   }
+  window['googleAPILoaded'] = function(){
+    console.log("Google API loaded.");
+  }
 
   // Start z-machine
   spinupJS('moonmist.z3');
@@ -591,5 +594,6 @@ div.output.fixed {
   step();
 })();
 </script>
+<script src="https://apis.google.com/js/client.js?onload=googleAPILoaded"></script>
 </body>
 </html>
