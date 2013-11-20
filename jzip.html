@@ -60,6 +60,9 @@ div.output.fixed {
   font-family: monospace;
   white-space: pre;
 }
+button.signin {
+   background-color: #DD2221; color: white; font-weight: bold;
+}
 #statuswindow {
   display: none;
   width: 100%;
@@ -175,7 +178,7 @@ div.output.fixed {
       <button>Save</button>
     </div>
     <div class="option auth">
-      <button>Sign in with Google</button>
+      <button class="signin">Sign in with Google</button>
     </div>
   </div>
 </div>
@@ -225,7 +228,7 @@ div.output.fixed {
     , ls = window.localStorage || null
     , lsave = {}                        // copy of localStorage savegames
     , dsave = {}                        // list of google drive savegames
-    , saveString = ''                   // current savegame stringified
+    , saveGame = ''                     // current savegame
     , history = ( ls && JSON.parse(ls.getItem('jszipHistory')||'[]') ) || []
     , hindex = history.length
     , hmax = 100                        // size of command history
@@ -313,13 +316,12 @@ div.output.fixed {
   // auto select radio buttons
   $('#savelocaloldname').focus(function(){$('#savedialog input[type=radio]').val(['localold']);});
   $('#savelocalnewname').focus(function(){$('#savedialog input[type=radio]').val(['localnew']);});
-  $('#restorelocaloldname').focus(function(){$('input[type=radio]',$restore).val(['localold']);});
   $('#savedriveoldname').focus(function(){$('#savedialog input[type=radio]').val(['driveold']);});
   $('#savedrivenewname').focus(function(){$('#savedialog input[type=radio]').val(['drivenew']);});
-  $('#restoredriveoldname').focus(function(){$('input[type=radio]',$restore).val(['driveold']);});
   // save/restore buttons
   $('.localsave button',$save).click(saveLocal);
   $('.localrestore button',$restore).click(restoreLocal);
+  $('.drivesave button',$save).click(saveDrive);
   $('.driverestore .drive button',$restore).click(restoreDrive);
   $('.filerestore button',$restore).click(function(){restoreFile($('#uploadfile')[0].files)});
 
@@ -460,12 +462,14 @@ div.output.fixed {
   }
   function taskSave() {
     fillFileSelect('#savelocaloldname');
+    fillDriveSelect('#savelocaloldname');
     $save.fadeIn();
-    // base64 encode the save.sav tmp for download
-    $dload.attr('href','data:text/csv;base64,'+window.btoa(FS.readFile('save.sav')));
-    // sringify for localStorage
-    saveString = stringify(FS.readFile('save.sav'));
+    // store savegame as string
+    var raw = FS.readFile('save.sav'),i,l=raw.length;
+    saveGame = ''; for(i=0;i<l;++i) saveGame+=String.fromCharCode(raw[i]);
     FS.unlink('save.sav');
+    // base64 encode the save.sav tmp for download
+    $dload.attr('href','data:text/csv;base64,'+window.btoa(saveGame));
   }
   function taskRestore(e) {
     fillFileSelect('#restorelocaloldname');
@@ -534,12 +538,12 @@ div.output.fixed {
     } else if(mode=='localold') {
       name = $('#savelocaloldname').val();
     } else {
-      throw Error('Unknown save mode!');
+      return;
     }
     // empty name
     if( name=='' ) return;
     // save to localstorage
-    lsave[name] = saveString;
+    lsave[name] = sringify(saveGame);
     ls.setItem('jszipSaves',JSON.stringify(lsave));
     // get back into game
     $save.fadeOut();
@@ -555,6 +559,53 @@ div.output.fixed {
     $restore.fadeOut();
     zRestore(e.count,e.o0,e.o1,e.o2);
     step();
+  }
+  function saveDrive() {
+    var name, mode = $('#savedialog input[type=radio]:checked').val();
+    if( mode=='drivenew' ) {
+      name = $('#savedrivenewname').val();
+    } else if(mode=='driveold') {
+      name = $('#savedriveoldname').val();
+    } else {
+      return;
+    }
+    // empty name
+    if( name=='' ) return;
+
+    // save to Google Drive
+    var boundary = '-------314159265358979323846'
+      , delimiter = "\r\n--" + boundary + "\r\n"
+      , close_delim = "\r\n--" + boundary + "--"
+      , metadata = {
+          'title': name,
+          'mimeType': 'application/octet-stream'
+        }
+      , base64Data = btoa(saveGame)
+      , multipartRequestBody =
+          delimiter +
+          'Content-Type: application/json\r\n\r\n' +
+          JSON.stringify(metadata) +
+          delimiter +
+          'Content-Type: application/octet-stream\r\n' +
+          'Content-Transfer-Encoding: base64\r\n' +
+          '\r\n' +
+          base64Data +
+          close_delim
+      , request = gapi.client.request({
+          'path': '/upload/drive/v2/files',
+          'method': 'POST',
+          'params': {'uploadType': 'multipart'},
+          'headers': { 'Content-Type': 'multipart/mixed; boundary="' + boundary + '"' },
+          'body': multipartRequestBody
+        });
+
+    request.execute(function(e){
+      // refresh the file lists
+      retrieveAllFiles();
+      // get back into game
+      $save.fadeOut();
+      step();
+    });
   }
   function restoreDrive() {
     var e=restoreOpts, name = $('#restoredriveoldname').val();
@@ -605,17 +656,20 @@ div.output.fixed {
     var retrievePageOfFiles = function(request, result) {
       request.execute(function(resp) {
         result = result.concat(resp.items);
-        var nextPageToken = resp.nextPageToken;
+        var nextPageToken = resp.nextPageToken, num, suf;
         if (nextPageToken) {
           request = gapi.client.drive.files.list({'pageToken': nextPageToken });
           retrievePageOfFiles(request, result);
         } else {
-          //console.log(result);
           // retrieved result, build dsave list
           dsave = {};
           for(var i=0; i<result.length; ++i ) {
-            if( result[i].mimeType == 'application/octet-stream' ) {
-              dsave[result[i].title] = result[i].downloadUrl;
+            if( result[i].mimeType == 'application/octet-stream' &&
+                result[i].labels.trashed == false ) {
+              // title ist not guaranteed to be unique, add number suffixes
+              num=1; suf=''; 
+              while( (result[i].title+suf) in dsave ) { suf=' ('+(++num)+')'; }
+              dsave[result[i].title+suf] = result[i].downloadUrl;
             }
           }
           fillDriveSelect('#savedriveoldname');
@@ -679,7 +733,7 @@ div.output.fixed {
           taskRestore(e);
           break
         default:
-          throw e;
+          error("jzip.js terminated. Reloade the page to play again.");
       }
     }
   }
