@@ -27,6 +27,16 @@ div.output {
   min-height: 0.5em;
   background-color: white;
 }
+div.error {
+  margin-bottom: 0.2em;
+  margin-top: 0.2em;
+  padding: 0.2em;
+  min-height: 0.5em;
+  background-color: pink;
+  border: 1px solid red;
+  color: red;
+  font-weight: bold;
+}
 div.echo {
   margin-bottom: 0.2em;
   min-height: 0.5em;
@@ -178,7 +188,7 @@ div.output.fixed {
     <div class="option">
       <input type="radio" name="restoretype" value="localold"/>
       <select id="restorelocaloldname">
-      <option>awesome_save.sav</option>
+      <option>Loading...</option>
       </select>
       <br/>
       <button>Restore</button>
@@ -197,7 +207,7 @@ div.output.fixed {
     <div class="option drive">
       <input type="radio" name="restoretype" value="driveold"/>
       <select id="restoredriveoldname">
-      <option>awesome_save.sav</option>
+      <option>Loading...</option>
       </select>
       <button>Restore</button>
     </div>
@@ -313,6 +323,7 @@ div.output.fixed {
   // save/restore buttons
   $('.localsave button',$save).click(saveLocal);
   $('.localrestore button',$restore).click(restoreLocal);
+  $('.driverestore .drive button',$restore).click(restoreDrive);
   $('.filerestore button',$restore).click(function(){restoreFile($('#uploadfile')[0].files)});
 
   // functions to be called from the c code
@@ -454,7 +465,7 @@ div.output.fixed {
     fillFileSelect('#savelocaloldname');
     $save.fadeIn();
     // base64 encode the save.sav tmp for download
-    $dload.attr('href','data:text/csv;base64,'+base64enc(FS.readFile('save.sav')));
+    $dload.attr('href','data:text/csv;base64,'+window.btoa(FS.readFile('save.sav')));
     // sringify for localStorage
     saveString = stringify(FS.readFile('save.sav'));
     FS.unlink('save.sav');
@@ -478,30 +489,6 @@ div.output.fixed {
   function scrollBottom() {
     $('body').hide().show(0)[0].scrollTop=$('body').height()
   }
-  function base64enc(file) {
-    // http://www.webtoolkit.info/javascript-base64.html
-    var output = "",
-        keyStr = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=",
-        chr1, chr2, chr3, enc1, enc2, enc3, enc4,
-        i = 0;
-
-    while (i < file.length) {
-      chr1 = file[i++]; chr2 = file[i++]; chr3 = file[i++];
-
-      enc1 = chr1 >> 2;
-      enc2 = ((chr1 & 3) << 4) | (chr2 >> 4);
-      enc3 = ((chr2 & 15) << 2) | (chr3 >> 6);
-      enc4 = chr3 & 63;
-
-      if (isNaN(chr2)) {
-        enc3 = enc4 = 64;
-      } else if (isNaN(chr3)) {
-        enc4 = 64;
-      }
-      output += keyStr.charAt(enc1) + keyStr.charAt(enc2) + keyStr.charAt(enc3) + keyStr.charAt(enc4);
-    }
-    return output;
-  }
   function stringify(l) {
     var i, t='';
     for(i=0; i<l.length; ++i ) {
@@ -515,6 +502,9 @@ div.output.fixed {
       l.push(t.charCodeAt(i)-65);
     }
     return l;
+  }
+  function error(t) {
+    $('<div class="error"></div>').text(t).insertBefore($('#inputline'));
   }
   function fillFileSelect(s) {
     var g,$s=$(s),n=true;
@@ -533,7 +523,7 @@ div.output.fixed {
     $s.empty();
     for(g in dsave) {
       if( dsave.hasOwnProperty(g) ) {
-        $s.append($('<option></option>').text(dsave[g]).attr('value',g));
+        $s.append($('<option></option>').text(g).attr('value',g));
         n=false;
       }
     }
@@ -563,7 +553,7 @@ div.output.fixed {
     if(mode=='localold') {
       name = $('#restorelocaloldname').val();
     } else {
-      throw Error('Unknown save mode!');
+      throw Error('Unknown restore mode!');
     }
 
     if(e==null) {
@@ -574,6 +564,19 @@ div.output.fixed {
     $restore.fadeOut();
     zRestore(e.count,e.o0,e.o1,e.o2);
     step();
+  }
+  function restoreDrive() {
+    var e=restoreOpts, name, mode = $('input[type=radio]:checked',$restore).val();
+    if(mode=='driveold') {
+      name = $('#restoredriveoldname').val();
+    } else {
+      throw Error('Unknown restore mode!');
+    }
+
+    if(e==null) {
+      throw Error('No z_restore options available!');
+    }
+    downloadDriveFile(dsave[name]);
   }
   function restoreFile(fl) {
     if(fl.length!=1) return;
@@ -627,7 +630,7 @@ div.output.fixed {
           dsave = {};
           for(var i=0; i<result.length; ++i ) {
             if( result[i].mimeType == 'application/octet-stream' ) {
-              dsave[result[i].id]=result[i].title;
+              dsave[result[i].title] = result[i].downloadUrl;
             }
           }
           fillDriveSelect('#savedriveoldname');
@@ -637,6 +640,33 @@ div.output.fixed {
     }
     var initialRequest = gapi.client.drive.files.list();
     retrievePageOfFiles(initialRequest, []);
+  }
+  function downloadDriveFile(url) {
+    var accessToken = gapi.auth.getToken().access_token
+      , e=restoreOpts
+      , xhr = new XMLHttpRequest();
+    xhr.open('GET', url);
+    xhr.setRequestHeader('Authorization', 'Bearer ' + accessToken);
+    xhr.responseType = 'arraybuffer';
+    xhr.onload = function() {
+      if( xhr.status == 200 ) {
+        FS.createDataFile('/', 'save.sav', new Uint8Array(xhr.response), true, true);
+        restoreOpts=null;
+        $restore.fadeOut();
+        zRestore(e.count,e.o0,e.o1,e.o2);
+        FS.unlink('save.sav');
+      } else {
+        error("Google Drive returned an error: " + xhr.statusText );
+      }
+      step();
+    };
+    xhr.onerror = function() {
+      // should probably report an error first
+      error("Error fetching file from Google Drive.");
+      $restore.fadeOut();
+      step(); 
+    };
+    xhr.send();
   }
 
   // Start z-machine
