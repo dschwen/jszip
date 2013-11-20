@@ -1122,12 +1122,23 @@ void print_time( int hours, int minutes )
       write_char( '0' );
    z_print_num( (zword_t)minutes );
 
+#ifdef EMSCRIPTEN
+   if ( pm_indicator == ON ) {
+      write_char( ' ' );
+      write_char( 'p' );
+      write_char( 'm' );
+   } else {
+      write_char( ' ' );
+      write_char( 'a' );
+      write_char( 'm' );
+   }
+#else
    /* Write the am or pm string */
    if ( pm_indicator == ON )
       write_string( " pm" );
    else
       write_string( " am" );
-
+#endif
 }                               /* print_time */
 
 /*

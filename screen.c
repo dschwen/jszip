@@ -282,18 +282,22 @@ void z_show_status( void )
    pad_line( 1 );
    status_part[count] = &status_line[status_pos];
 #ifdef EMSCRIPTEN
-      asm("window['jsFlushTo']('DUMMY')"::);
+   asm("window['jsFlushTo']('DUMMY')"::);
 #endif
-   if ( load_variable( 16 ) != 0 )
+
+   if ( load_variable( 16 ) != 0 ) {
       z_print_obj( load_variable( 16 ) );
 #ifdef EMSCRIPTEN
       asm("window['jsFlushTo']('row1')"::);
 #endif
+   }
+
    end_of_string[count++] = status_pos;
    status_line[status_pos++] = '\0';
 
    if ( get_byte( H_CONFIG ) & CONFIG_TIME )
    {
+      EM_ASM( console.log('before time-1') );
 
       /* If a time display print the hours and minutes from global
        * variables 17 and 18 */

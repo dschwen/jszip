@@ -47,6 +47,7 @@ div.output.emph {
 }
 div.output.fixed {
   font-family: monospace;
+  white-space: pre;
 }
 #statuswindow {
   display: none;
@@ -58,6 +59,9 @@ div.output.fixed {
   top: 0; left: 0;
   min-height: 1em;
   padding: 0.5em 0 0.5em 0;
+      -webkit-transform: translate3d(0, 0, 0);
+      -moz-transform: translate3d(0, 0, 0);
+      -ms-transform: translate3d(0, 0, 0); /*only in IE10*/
 }
 #statuswindow>span.builtin {
   float: right;
@@ -301,7 +305,7 @@ div.output.fixed {
         if( out.reverse ) $line.addClass('reverse');
         if( out.bold ) $line.addClass('bold');
         if( out.emph ) $line.addClass('emph');
-        if( out.fixed ) $line.addClass('fixed');
+        if( out.fixed || /[^\s]\s\s/.test(out.buf) ) $line.addClass('fixed');
         scrollBottom();
       } else {
         srows[s_row-1].text(out.buf);
@@ -321,6 +325,7 @@ div.output.fixed {
     if(l.length>0) console.log('printstring',p-s,s,p,t,l);
   }
   window['jsFlushTo'] = function(s) {
+    console.log('jsFlushTo(',s,')');
     var c=$('#'+s);
     if(out.buf=='') {
       c.hide();
@@ -369,6 +374,7 @@ div.output.fixed {
     $('#inputline').show();
     $input.focus();
     scrollBottom();
+    out.buf='';
     lineCallback=function(text) { 
       var i,l=text.length;
       
@@ -554,7 +560,8 @@ div.output.fixed {
   }
 
   // Start z-machine
-  spinupJS('zork2.z3');
+  spinupJS('moonmist.z3');
+  //spinupJS('zork2.z3');
   //spinupJS('curses.z5');
 
   // call interpreter
