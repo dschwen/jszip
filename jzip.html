@@ -28,8 +28,7 @@ div.output {
   background-color: white;
 }
 div.error {
-  margin-bottom: 0.2em;
-  margin-top: 0.2em;
+  margin-top: 0.7em;
   padding: 0.2em;
   min-height: 0.5em;
   background-color: pink;
@@ -186,7 +185,6 @@ div.output.fixed {
   <div class="localrestore haslocal">
     <h2>&hellip;from this browser</h2>
     <div class="option">
-      <input type="radio" name="restoretype" value="localold"/>
       <select id="restorelocaloldname">
       <option>Loading...</option>
       </select>
@@ -205,7 +203,6 @@ div.output.fixed {
   <div class="driverestore hasdrive">
     <h2>&hellip;from Google Drive</h2>
     <div class="option drive">
-      <input type="radio" name="restoretype" value="driveold"/>
       <select id="restoredriveoldname">
       <option>Loading...</option>
       </select>
@@ -549,13 +546,7 @@ div.output.fixed {
     step();
   }
   function restoreLocal() {
-    var e=restoreOpts, name, mode = $('input[type=radio]:checked',$restore).val();
-    if(mode=='localold') {
-      name = $('#restorelocaloldname').val();
-    } else {
-      throw Error('Unknown restore mode!');
-    }
-
+    var e=restoreOpts, name = $('#restorelocaloldname').val();
     if(e==null) {
       throw Error('No z_restore options available!');
     }
@@ -566,13 +557,7 @@ div.output.fixed {
     step();
   }
   function restoreDrive() {
-    var e=restoreOpts, name, mode = $('input[type=radio]:checked',$restore).val();
-    if(mode=='driveold') {
-      name = $('#restoredriveoldname').val();
-    } else {
-      throw Error('Unknown restore mode!');
-    }
-
+    var e=restoreOpts, name = $('#restoredriveoldname').val();
     if(e==null) {
       throw Error('No z_restore options available!');
     }
