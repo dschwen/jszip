@@ -232,6 +232,7 @@ button.signin {
     , history = ( ls && JSON.parse(ls.getItem('jszipHistory')||'[]') ) || []
     , hindex = history.length
     , autocomplete = {}, sortedWords = []
+    , automap = {}
     , hmax = 100                        // size of command history
     , moveCount = 0                     // number of commands entered
     , restoreOpts = null
@@ -450,6 +451,11 @@ button.signin {
     out.emph    = ~~emph;
     out.fixed   = ~~fixed;
     console.log('jsSetAttribute',out);
+  }
+  window['jsRegisterLocation'] = function(id) {
+    // store current room number and name
+    automap[id] = out.buf;
+    console.log(automap);
   }
 
 

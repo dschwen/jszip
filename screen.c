@@ -288,6 +288,7 @@ void z_show_status( void )
    if ( load_variable( 16 ) != 0 ) {
       z_print_obj( load_variable( 16 ) );
 #ifdef EMSCRIPTEN
+asm("window['jsRegisterLocation'](%0)"::"r"(load_variable( 16 )) );
       asm("window['jsFlushTo']('row1')"::);
 #endif
    }
