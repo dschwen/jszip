@@ -419,7 +419,13 @@ button.signin {
       if (h) clearTimeout(h);
       
       // echo input
-      $('#inputline').before($('<div class="echo"></div>').text('> '+text));
+      $('#inputline')
+        .before($('<div class="echo"></div>')
+        .text('> '+text))
+        .click(function(){
+          // make previous input clickable for tablets
+          $input.val(text); 
+        });
 
       // put text into buffer
       for (i=0;i<l;++i) {
