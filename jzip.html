@@ -524,7 +524,7 @@ button.signin {
     $s.empty();
     for(g in dsave) {
       if( dsave.hasOwnProperty(g) ) {
-        $s.append($('<option></option>').text(g).attr('value',g));
+        $s.append($('<option></option>').text(dsave[g].title).attr('value',g));
         n=false;
       }
     }
@@ -561,27 +561,40 @@ button.signin {
     step();
   }
   function saveDrive() {
-    var name, mode = $('#savedialog input[type=radio]:checked').val();
+    var id=null, name, mode = $('#savedialog input[type=radio]:checked').val();
     if( mode=='drivenew' ) {
       name = $('#savedrivenewname').val();
+      if(name=='') return;
     } else if(mode=='driveold') {
-      name = $('#savedriveoldname').val();
+      id = $('#savedriveoldname').val();
+      if( !(id in dsave) ) return;
+      name = dsave[id].title;
     } else {
       return;
     }
     // empty name
-    if( name=='' ) return;
+
 
     // save to Google Drive
     var boundary = '-------314159265358979323846'
       , delimiter = "\r\n--" + boundary + "\r\n"
       , close_delim = "\r\n--" + boundary + "--"
-      , metadata = {
-          'title': name,
-          'mimeType': 'application/octet-stream'
-        }
-      , base64Data = btoa(saveGame)
-      , multipartRequestBody =
+      , metadate
+      , base64Data = btoa(saveGame);
+    
+    // specify parents in metadata to allow update of existing file
+    if (id) {
+      metadata = dsave[id];
+      id='/'+id; // append /id to xhr url causes an update of an existing file
+    } else {
+      metadata = {
+        'title': name,
+        'mimeType': 'application/octet-stream'
+      };
+      id='';
+    }
+
+    var multipartRequestBody =
           delimiter +
           'Content-Type: application/json\r\n\r\n' +
           JSON.stringify(metadata) +
@@ -592,9 +605,9 @@ button.signin {
           base64Data +
           close_delim
       , request = gapi.client.request({
-          'path': '/upload/drive/v2/files',
-          'method': 'POST',
-          'params': {'uploadType': 'multipart'},
+          'path': '/upload/drive/v2/files'+id,
+          'method': 'POST', 'alt': 'json',
+          'params': {'uploadType': 'multipart', 'alt': 'json'},
           'headers': { 'Content-Type': 'multipart/mixed; boundary="' + boundary + '"' },
           'body': multipartRequestBody
         });
@@ -608,11 +621,12 @@ button.signin {
     });
   }
   function restoreDrive() {
-    var e=restoreOpts, name = $('#restoredriveoldname').val();
+    var e=restoreOpts, id = $('#restoredriveoldname').val();
     if(e==null) {
       throw Error('No z_restore options available!');
     }
-    downloadDriveFile(dsave[name]);
+    if( !(id in dsave) ) return;
+    downloadDriveFile(id);
   }
   function restoreFile(fl) {
     if(fl.length!=1) return;
@@ -661,15 +675,12 @@ button.signin {
           request = gapi.client.drive.files.list({'pageToken': nextPageToken });
           retrievePageOfFiles(request, result);
         } else {
-          // retrieved result, build dsave list
+          // retrieved result, build dsave list of eligible files that are not in trash
           dsave = {};
           for(var i=0; i<result.length; ++i ) {
             if( result[i].mimeType == 'application/octet-stream' &&
                 result[i].labels.trashed == false ) {
-              // title ist not guaranteed to be unique, add number suffixes
-              num=1; suf=''; 
-              while( (result[i].title+suf) in dsave ) { suf=' ('+(++num)+')'; }
-              dsave[result[i].title+suf] = result[i].downloadUrl;
+              dsave[result[i].id] = result[i];
             }
           }
           fillDriveSelect('#savedriveoldname');
@@ -680,8 +691,9 @@ button.signin {
     var initialRequest = gapi.client.drive.files.list();
     retrievePageOfFiles(initialRequest, []);
   }
-  function downloadDriveFile(url) {
+  function downloadDriveFile(id) {
     var accessToken = gapi.auth.getToken().access_token
+      , url = dsave[id].downloadUrl
       , e=restoreOpts
       , xhr = new XMLHttpRequest();
     xhr.open('GET', url);
