@@ -231,7 +231,7 @@ button.signin {
     , saveGame = ''                     // current savegame
     , history = ( ls && JSON.parse(ls.getItem('jszipHistory')||'[]') ) || []
     , hindex = history.length
-    , autocomplete = {}
+    , autocomplete = {}, sortedWords = []
     , hmax = 100                        // size of command history
     , moveCount = 0                     // number of commands entered
     , restoreOpts = null
@@ -240,48 +240,99 @@ button.signin {
     , CLIENT_ID = '961409091716-f13l7n45n8u0uvkjqc9vjjddndd40jgs.apps.googleusercontent.com'
     , SCOPES = 'https://www.googleapis.com/auth/drive';
 
-  // hook key events up to input widget
-  $input.focus().keydown(function(e) { 
-    var v = $input.val();
-    //console.log(e.keyCode);
-    switch(e.keyCode) {
-      case 9:  // Tab
-        e.preventDefault();
-      case 38: // Cursor up
-        if (hindex>0) {
-          if (v!=='') { history[hindex] = v; }
-          $input.val(history[--hindex]);
-        }
-        e.preventDefault();
-        break;
-      case 40: // Cursor down
-        if (hindex<history.length) {
-          if (v!=='') { history[hindex] = v; }
-          $input.val(history[++hindex]);
-        }
-        e.preventDefault();
-        break;
-      case 13: // Enter 
-        if (v!=='') {
-          hindex = history.length;
-          history[hindex++] = v; 
-          // only keep the last hmax commands in the history
-          if (hindex>hmax) {
-            history=history.slice(-hmax);
-            hindex=hmax;
-          }
-          ls.setItem('jszipHistory',JSON.stringify(history))
-        }
-        if (lineCallback) {
-          $input.val('');
-          lineCallback(v);
-        } else {
-          e.preventDefault();
-        }
-        break;
+  // hook key events up to input widget (closure for local variables)
+  (function() {
+    var prefix=null, currentSuggestions=[], suggestionIndex=0, typedInput='', stem='';
+
+    // select a range of characters in the input box
+    function selectRange(start,end) {
+      console.log('select',start,end);
+      var i=$input[0], v = $input.val(), l=v.length;
+      if (i.setSelectionRange) {
+        i.focus();
+        i.setSelectionRange(start,end);
+      } else if (i.createTextRange) {
+        var range = i.createTextRange();
+        range.collapse(true);
+        range.moveStart('character', start);
+        range.select();
+      }
     }
-    e.stopPropagation();
-  });
+
+    $input.focus().keydown(function(e) { 
+      var v = $input.val(), last;
+      //console.log(e.keyCode);
+      switch(e.keyCode) {
+        case 9:  // Tab
+          if (prefix===null) {
+            // find current last word
+            typedInput=v;
+            last = v.lastIndexOf(' ')+1
+            prefix = v.substr(last);
+            stem = v.substr(0,last);
+            currentSuggestions = getAutocompleteList(prefix);
+            console.log(prefix,currentSuggestions);
+            suggestionIndex=0;
+          }
+
+          // cycle through suggestions
+          if (suggestionIndex < currentSuggestions.length) {
+            var t = stem+currentSuggestions[suggestionIndex];
+            $input.val(t);
+            selectRange(typedInput.length,t.length);
+            suggestionIndex++;
+            if (suggestionIndex == currentSuggestions.length) suggestionIndex=0;
+          } 
+          
+          e.preventDefault();
+          break;
+        case 38: // Cursor up
+          if (hindex>0) {
+            if (v!=='') { history[hindex] = v; }
+            $input.val(history[--hindex]);
+          }
+          e.preventDefault();
+          break;
+        case 40: // Cursor down
+          if (hindex<history.length) {
+            if (v!=='') { history[hindex] = v; }
+            $input.val(history[++hindex]);
+          }
+          e.preventDefault();
+          break;
+        case 13: // Enter 
+          if (v!=='') {
+            hindex = history.length;
+            history[hindex++] = v; 
+            // only keep the last hmax commands in the history
+            if (hindex>hmax) {
+              history=history.slice(-hmax);
+              hindex=hmax;
+            }
+            ls.setItem('jszipHistory',JSON.stringify(history))
+          }
+          if (lineCallback) {
+            $input.val('');
+            lineCallback(v);
+          } else {
+            e.preventDefault();
+          }
+          break;
+        case 32: // space
+          // accept current suggestion
+          if (prefix!==null) {
+            prefix=null;
+            $input.val(v+' ');
+            e.preventDefault();
+          }
+          break;
+        default:
+          // invalidate the current autocomplete prefix
+          prefix=null;
+      }
+      e.stopPropagation();
+    });
+  })();
 
   // hook key events up to document
   $(document).keydown(function(e) {
@@ -406,6 +457,9 @@ button.signin {
   function taskGetLine(e) {
     var t=e.timeout,h=null;
     
+    // prepare Autocomplete word list
+    prepareAutocomplete();
+
     // display input line
     $('#inputline').show();
     $input.focus();
@@ -725,22 +779,38 @@ button.signin {
     // add words from text to autocomplete hash (with current moveCount)
     var words = text.split(/[\s,.!?)(]+/), i, l=words.length, word;
     for (i=0; i<l; ++i) {
-      word = words[i];
-      if (/^[a-zA-Z-]+$/.test(word)) {
+      word = words[i].toLowerCase();
+      if (/^[a-zA-Z-]+$/.test(word) && word.length>2) {
         autocomplete[word]=moveCount;
       }
     }
-
+  }
+  function prepareAutocomplete() {
     // expire words from more than 5 moves back
-    for (word in words) {
-      if (words.hasOwnProperty(word)) {
-        if (words[word]+5<moveCount) {
-          delete words[word]; 
+    var word;
+    sortedWords=[];
+    for (word in autocomplete) {
+      if (autocomplete.hasOwnProperty(word)) {
+        if (autocomplete[word]+5<moveCount) {
+          delete autocomplete[word]; 
+        } else {
+          sortedWords.push(word);
         }
       }
     }
 
-    console.log(autocomplete);
+    sortedWords.sort();
+    console.log(sortedWords);
+  }
+  function getAutocompleteList(p) {
+    // get a list of all candidate words in the AC list
+    if (p==='') return [];
+    // do linear search (simpler)
+    var l=sortedWords.length, a, b;
+    // get start of slice (first candidate)
+    for(a=0; a<l && p>sortedWords[a]; ++a);
+    for(b=a; b<l && sortedWords[b].indexOf(p)==0; ++b); 
+    return sortedWords.slice(a,b);
   }
 
   // Start z-machine
