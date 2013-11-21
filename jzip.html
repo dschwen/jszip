@@ -561,7 +561,7 @@ button.signin {
     step();
   }
   function saveDrive() {
-    var id=null, name, mode = $('#savedialog input[type=radio]:checked').val();
+    var id=null, name, mode = $('#savedialog input[type=radio]:checked').val(), method;
     if( mode=='drivenew' ) {
       name = $('#savedrivenewname').val();
       if(name=='') return;
@@ -586,12 +586,14 @@ button.signin {
     if (id) {
       metadata = dsave[id];
       id='/'+id; // append /id to xhr url causes an update of an existing file
+      method='PUT';
     } else {
       metadata = {
         'title': name,
         'mimeType': 'application/octet-stream'
       };
       id='';
+      method='POST';
     }
 
     var multipartRequestBody =
@@ -606,7 +608,7 @@ button.signin {
           close_delim
       , request = gapi.client.request({
           'path': '/upload/drive/v2/files'+id,
-          'method': 'POST', 'alt': 'json',
+          'method': method, 'alt': 'json',
           'params': {'uploadType': 'multipart', 'alt': 'json'},
           'headers': { 'Content-Type': 'multipart/mixed; boundary="' + boundary + '"' },
           'body': multipartRequestBody
