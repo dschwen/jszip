@@ -248,13 +248,13 @@ button.signin {
         e.preventDefault();
       case 38: // Cursor up
         if (hindex>0) {
-          if(v!=='') { history[hindex] = v; }
+          if (v!=='') { history[hindex] = v; }
           $input.val(history[--hindex]);
         }
         e.preventDefault();
         break;
       case 40: // Cursor down
-        if(hindex<history.length) {
+        if (hindex<history.length) {
           if (v!=='') { history[hindex] = v; }
           $input.val(history[++hindex]);
         }
@@ -265,13 +265,13 @@ button.signin {
           hindex = history.length;
           history[hindex++] = v; 
           // only keep the last hmax commands in the history
-          if(hindex>hmax) {
+          if (hindex>hmax) {
             history=history.slice(-hmax);
             hindex=hmax;
           }
           ls.setItem('jszipHistory',JSON.stringify(history))
         }
-        if(lineCallback) {
+        if (lineCallback) {
           $input.val('');
           lineCallback(v);
         } else {
@@ -285,7 +285,7 @@ button.signin {
   // hook key events up to document
   $(document).keydown(function(e) {
     console.log(e.keyCode);
-    if( keyCallback ) {
+    if (keyCallback) {
       keyCallback(e.keyCode);
     } else {
       switch(e.keyCode) {
@@ -303,7 +303,7 @@ button.signin {
   $('#readkey').hide();
 
   // get saves from localStorage
-  if(ls) {
+  if (ls) {
     lsave = JSON.parse(ls.getItem('jszipSaves')||'{}');
   } else {
     $('.localsave').hide();
@@ -333,13 +333,13 @@ button.signin {
     , argstore = window['argstore']={};
   var writeChar = window['jsWriteChar'] = function(c) {
     //console.log('jsWriteChar',c,String.fromCharCode(c));
-    if(c==13 || c==10 ) {
-      if(out.text) {
+    if (c==13 || c==10 ) {
+      if (out.text) {
         var $line = $('<div class="output"></div>').text(out.buf).insertBefore($('#inputline'));
-        if( out.reverse ) $line.addClass('reverse');
-        if( out.bold ) $line.addClass('bold');
-        if( out.emph ) $line.addClass('emph');
-        if( out.fixed || /[^\s]\s\s/.test(out.buf) ) $line.addClass('fixed');
+        if (out.reverse) $line.addClass('reverse');
+        if (out.bold) $line.addClass('bold');
+        if (out.emph) $line.addClass('emph');
+        if (out.fixed || /[^\s]\s\s/.test(out.buf)) $line.addClass('fixed');
         scrollBottom();
       } else {
         srows[s_row-1].text(out.buf);
@@ -356,12 +356,12 @@ button.signin {
       t+=String.fromCharCode(c);
       l.push(c)
     } 
-    if(l.length>0) console.log('printstring',p-s,s,p,t,l);
+    if (l.length>0) console.log('printstring',p-s,s,p,t,l);
   }
   window['jsFlushTo'] = function(s) {
     console.log('jsFlushTo(',s,')');
     var c=$('#'+s);
-    if(out.buf=='') {
+    if (out.buf=='') {
       c.hide();
     } else {
       c.text(out.buf).show();
@@ -373,18 +373,18 @@ button.signin {
   }
   window['jsMoveCursor'] = function(row,col) {
     console.log(out.text,row,col,out.buf);
-    if( !out.text ) {
+    if (!out.text) {
       s_row=row;
       s_col=col;
     }
   }
   window['jsSplitWindow'] = function(lines) {
     $('body').css('padding-top',(lines+1)+'em');
-    if(lines) {
+    if (lines) {
       $statw.show().css('height',lines+'em');
       $('.row',$statw).remove();
       srows=[];
-      for(var i=0; i<lines; ++i ) {
+      for (var i=0; i<lines; ++i) {
         srows[i] = $('<span class="row"></span>').css('top',i+'.5em').attr('id','row'+(i+1)).appendTo($statw);
       }
     } else {
@@ -416,13 +416,13 @@ button.signin {
       $('#inputline').hide();
       $input.blur();
       lineCallback=null;
-      if(h) clearTimeout(h);
+      if (h) clearTimeout(h);
       
       // echo input
       $('#inputline').before($('<div class="echo"></div>').text('> '+text));
 
       // put text into buffer
-      for(i=0;i<l;++i) {
+      for (i=0;i<l;++i) {
         Module.setValue(e.buffer+i,text.charCodeAt(i),'i8');
       }
       jsrGetLine(e.cbuf, e.buffer, l, 13, e.timeout, e.action_routine );
@@ -430,7 +430,7 @@ button.signin {
     };
 
     // set up a timeout
-    if(t>0) {
+    if (t>0) {
       h = setTimeout(function(){ 
         $('#inputline').hide();
         $input.blur();
@@ -449,13 +449,13 @@ button.signin {
       //clean up
       keyCallback = null;
       /* hide readkey bar */
-      if(h) clearTimeout(h);
+      if (h) clearTimeout(h);
 
       jsrInputCharacter(c,t);
       step();
     }
     // set up a timeout
-    if(t>0) {
+    if (t>0) {
       h = setTimeout(function(){ 
         keyCallback = null;
         jsrInputCharacter(-1,t); 
@@ -469,7 +469,7 @@ button.signin {
     $save.fadeIn();
     // store savegame as string
     var raw = FS.readFile('save.sav'),i,l=raw.length;
-    saveGame = ''; for(i=0;i<l;++i) saveGame+=String.fromCharCode(raw[i]);
+    saveGame = ''; for (i=0;i<l;++i) saveGame+=String.fromCharCode(raw[i]);
     FS.unlink('save.sav');
     // base64 encode the save.sav tmp for download
     $dload.attr('href','data:application/octet-stream;base64,'+window.btoa(saveGame));
@@ -499,39 +499,40 @@ button.signin {
   function fillFileSelect(s) {
     var g,$s=$(s),n=true;
     $s.empty();
-    for(g in lsave) {
-      if( lsave.hasOwnProperty(g) ) {
+    for (g in lsave) {
+      if (lsave.hasOwnProperty(g)) {
         $s.append($('<option></option>').text(g).attr('value',g));
         n=false;
       }
     }
-    if(n) { $('.haslocal').hide() }
-    else  { $('.haslocal').show() }
+    if (n) { $('.haslocal').hide() }
+    else   { $('.haslocal').show() }
   }
   function fillDriveSelect(s) {
+    if (dsave===null) { return; }
+
     var g,$s=$(s),n=true;
-    if(dselect===null) return;
     $s.empty();
-    for(g in dsave) {
-      if( dsave.hasOwnProperty(g) ) {
+    for (g in dsave) {
+      if (dsave.hasOwnProperty(g)) {
         $s.append($('<option></option>').text(dsave[g].title).attr('value',g));
         n=false;
       }
     }
-    if(n) { $('.hasdrive').hide() }
+    if (n) { $('.hasdrive').hide() }
     else  { $('.hasdrive').show() }
   }
   function saveLocal() {
     var name, mode = $('#savedialog input[type=radio]:checked').val();
-    if( mode=='localnew' ) {
+    if (mode=='localnew') {
       name = $('#savelocalnewname').val();
-    } else if(mode=='localold') {
+    } else if (mode=='localold') {
       name = $('#savelocaloldname').val();
     } else {
       return;
     }
     // empty name
-    if( name=='' ) return;
+    if (name=='') return;
     // save to localstorage
     lsave[name] = btoa(saveGame);
     ls.setItem('jszipSaves',JSON.stringify(lsave));
@@ -541,7 +542,7 @@ button.signin {
   }
   function restoreLocal() {
     var e=restoreOpts, name = $('#restorelocaloldname').val();
-    if(e==null) {
+    if (e==null) {
       throw Error('No z_restore options available!');
     }
     FS.createDataFile('/', 'save.sav', atob(lsave[name]), true, true);
@@ -552,12 +553,12 @@ button.signin {
   }
   function saveDrive() {
     var id=null, name, mode = $('#savedialog input[type=radio]:checked').val(), method;
-    if( mode=='drivenew' ) {
+    if (mode=='drivenew') {
       name = $('#savedrivenewname').val();
-      if(name=='') return;
-    } else if(mode=='driveold') {
+      if (name=='') return;
+    } else if (mode=='driveold') {
       id = $('#savedriveoldname').val();
-      if( !(id in dsave) ) return;
+      if (!(id in dsave)) return;
       name = dsave[id].title;
     } else {
       return;
@@ -612,14 +613,14 @@ button.signin {
   }
   function restoreDrive() {
     var e=restoreOpts, id = $('#restoredriveoldname').val();
-    if(e==null) {
+    if (e==null) {
       throw Error('No z_restore options available!');
     }
-    if( !(id in dsave) ) return;
+    if (!(id in dsave)) { return; }
     downloadDriveFile(id);
   }
   function restoreFile(fl) {
-    if(fl.length!=1) return;
+    if (fl.length!=1) { return; }
     var f=fl[0];
 
     // instantiate a new FileReader
@@ -667,9 +668,9 @@ button.signin {
         } else {
           // retrieved result, build dsave list of eligible files that are not in trash
           dsave = {};
-          for(var i=0; i<result.length; ++i ) {
-            if( result[i].mimeType == 'application/octet-stream' &&
-                result[i].labels.trashed == false ) {
+          for (var i=0; i<result.length; ++i ) {
+            if (result[i].mimeType == 'application/octet-stream' &&
+                result[i].labels.trashed == false) {
               dsave[result[i].id] = result[i];
             }
           }
@@ -690,7 +691,7 @@ button.signin {
     xhr.setRequestHeader('Authorization', 'Bearer ' + accessToken);
     xhr.responseType = 'arraybuffer';
     xhr.onload = function() {
-      if( xhr.status == 200 ) {
+      if (xhr.status == 200) {
         FS.createDataFile('/', 'save.sav', new Uint8Array(xhr.response), true, true);
         restoreOpts=null;
         $restore.fadeOut();
@@ -735,7 +736,7 @@ button.signin {
           taskRestore(e);
           break
         default:
-          error("jzip.js terminated. Reloade the page to play again.");
+          error("jzip.js terminated. Reload the page to play again.");
       }
     }
   }
