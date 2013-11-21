@@ -212,7 +212,7 @@ button.signin {
       <button>Restore</button>
     </div>
     <div class="option auth">
-      <button>Sign in with Google</button>
+      <button class="signin">Sign in with Google</button>
     </div>
   </div>
 </div>
@@ -227,10 +227,11 @@ button.signin {
     , srows = [], s_row=1, s_col=1
     , ls = window.localStorage || null
     , lsave = {}                        // copy of localStorage savegames
-    , dsave = {}                        // list of google drive savegames
+    , dsave = null                      // list of google drive savegames (null if not authenticated)
     , saveGame = ''                     // current savegame
     , history = ( ls && JSON.parse(ls.getItem('jszipHistory')||'[]') ) || []
     , hindex = history.length
+    , autocomplete = []
     , hmax = 100                        // size of command history
     , restoreOpts = null
     , keyCallback = null
@@ -243,6 +244,8 @@ button.signin {
     var v = $input.val();
     //console.log(e.keyCode);
     switch(e.keyCode) {
+      case 9:  // Tab
+        e.preventDefault();
       case 38: // Cursor up
         if (hindex>0) {
           if(v!=='') { history[hindex] = v; }
@@ -462,14 +465,14 @@ button.signin {
   }
   function taskSave() {
     fillFileSelect('#savelocaloldname');
-    fillDriveSelect('#savelocaloldname');
+    fillDriveSelect('#savelocaloldname');}
     $save.fadeIn();
     // store savegame as string
     var raw = FS.readFile('save.sav'),i,l=raw.length;
     saveGame = ''; for(i=0;i<l;++i) saveGame+=String.fromCharCode(raw[i]);
     FS.unlink('save.sav');
     // base64 encode the save.sav tmp for download
-    $dload.attr('href','data:text/csv;base64,'+window.btoa(saveGame));
+    $dload.attr('href','data:application/octet-stream;base64,'+window.btoa(saveGame));
   }
   function taskRestore(e) {
     fillFileSelect('#restorelocaloldname');
@@ -490,20 +493,6 @@ button.signin {
   function scrollBottom() {
     $('body').hide().show(0)[0].scrollTop=$('body').height()
   }
-  function stringify(l) {
-    var i, t='';
-    for(i=0; i<l.length; ++i ) {
-      t+=String.fromCharCode(l[i]+65);
-    }
-    return t;
-  }
-  function unstringify(t) {
-    var i, l=[];
-    for(i=0; i<t.length; ++i ) {
-      l.push(t.charCodeAt(i)-65);
-    }
-    return l;
-  }
   function error(t) {
     $('<div class="error"></div>').text(t).insertBefore($('#inputline'));
   }
@@ -521,6 +510,7 @@ button.signin {
   }
   function fillDriveSelect(s) {
     var g,$s=$(s),n=true;
+    if(dselect===null) return;
     $s.empty();
     for(g in dsave) {
       if( dsave.hasOwnProperty(g) ) {
@@ -543,7 +533,7 @@ button.signin {
     // empty name
     if( name=='' ) return;
     // save to localstorage
-    lsave[name] = sringify(saveGame);
+    lsave[name] = btoa(saveGame);
     ls.setItem('jszipSaves',JSON.stringify(lsave));
     // get back into game
     $save.fadeOut();
@@ -554,7 +544,7 @@ button.signin {
     if(e==null) {
       throw Error('No z_restore options available!');
     }
-    FS.createDataFile('/', 'save.sav', unstringify(lsave[name]), true, true);
+    FS.createDataFile('/', 'save.sav', atob(lsave[name]), true, true);
     restoreOpts=null;
     $restore.fadeOut();
     zRestore(e.count,e.o0,e.o1,e.o2);
@@ -572,8 +562,6 @@ button.signin {
     } else {
       return;
     }
-    // empty name
-
 
     // save to Google Drive
     var boundary = '-------314159265358979323846'
@@ -582,7 +570,7 @@ button.signin {
       , metadate
       , base64Data = btoa(saveGame);
     
-    // specify parents in metadata to allow update of existing file
+    // specify original metadata and use method 'PUT' to allow update of existing file
     if (id) {
       metadata = dsave[id];
       id='/'+id; // append /id to xhr url causes an update of an existing file
