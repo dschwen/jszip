@@ -231,8 +231,9 @@ button.signin {
     , saveGame = ''                     // current savegame
     , history = ( ls && JSON.parse(ls.getItem('jszipHistory')||'[]') ) || []
     , hindex = history.length
-    , autocomplete = []
+    , autocomplete = {}
     , hmax = 100                        // size of command history
+    , moveCount = 0                     // number of commands entered
     , restoreOpts = null
     , keyCallback = null
     , lineCallback = null
@@ -341,6 +342,7 @@ button.signin {
         if (out.emph) $line.addClass('emph');
         if (out.fixed || /[^\s]\s\s/.test(out.buf)) $line.addClass('fixed');
         scrollBottom();
+        addToAutocomplete(out.buf);
       } else {
         srows[s_row-1].text(out.buf);
       }
@@ -418,6 +420,9 @@ button.signin {
       lineCallback=null;
       if (h) clearTimeout(h);
       
+      // increase moveCount
+      moveCount++;
+
       // echo input
       $('#inputline')
         .before($('<div class="echo"></div>')
@@ -715,6 +720,27 @@ button.signin {
       step(); 
     };
     xhr.send();
+  }
+  function addToAutocomplete(text) {
+    // add words from text to autocomplete hash (with current moveCount)
+    var words = text.split(/[\s,.!?)(]+/), i, l=words.length, word;
+    for (i=0; i<l; ++i) {
+      word = words[i];
+      if (/^[a-zA-Z-]+$/.test(word)) {
+        autocomplete[word]=moveCount;
+      }
+    }
+
+    // expire words from more than 5 moves back
+    for (word in words) {
+      if (words.hasOwnProperty(word)) {
+        if (words[word]+5<moveCount) {
+          delete words[word]; 
+        }
+      }
+    }
+
+    console.log(autocomplete);
   }
 
   // Start z-machine
