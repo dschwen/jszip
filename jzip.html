@@ -232,7 +232,7 @@ button.signin {
     , history = ( ls && JSON.parse(ls.getItem('jszipHistory')||'[]') ) || []
     , hindex = history.length
     , autocomplete = {}, sortedWords = []
-    , automap = {}
+    , automap = {}, lastDirection=null, lastRoom=null
     , hmax = 100                        // size of command history
     , moveCount = 0                     // number of commands entered
     , restoreOpts = null
@@ -242,7 +242,7 @@ button.signin {
     , SCOPES = 'https://www.googleapis.com/auth/drive';
 
   // hook key events up to input widget (closure for local variables)
-  (function() {
+  function setupInput() {
     var prefix=null, currentSuggestions=[], suggestionIndex=0, typedInput='', stem='';
 
     // select a range of characters in the input box
@@ -333,7 +333,9 @@ button.signin {
       }
       e.stopPropagation();
     });
-  })();
+  };
+
+  setupInput();
 
   // hook key events up to document
   $(document).keydown(function(e) {
@@ -454,7 +456,17 @@ button.signin {
   }
   window['jsRegisterLocation'] = function(id) {
     // store current room number and name
-    automap[id] = out.buf;
+    if (id!==lastRoom) {
+      // add transition to last room
+      if (lastRoom!==null && (lastRoom in automap) && lastDirection!==null) {
+        automap[lastRoom][lastDirection]=id;
+      }
+      // add new room
+      if (!(id in automap)) {
+        automap[id] = {'name': out.buf};
+      }
+      lastRoom=id;
+    }
     console.log(automap);
   }
 
@@ -480,6 +492,9 @@ button.signin {
       lineCallback=null;
       if (h) clearTimeout(h);
       
+      // set the last direction to guide the automapper
+      lastDirection = parseDirection(text);
+
       // increase moveCount
       moveCount++;
 
@@ -818,6 +833,22 @@ button.signin {
     for(b=a; b<l && sortedWords[b].indexOf(p)==0; ++b); 
     return sortedWords.slice(a,b);
   }
+  function parseDirection(command) {
+    // try to parse user input to store the last geiven direction of movement
+    var v=command.toLowerCase();
+    if (/^n$|^north$|^go north$/.test(v)) return 'n';
+    if (/^e$|^east$|^go east$/.test(v)) return 'e';
+    if (/^s$|^south$|^go south$/.test(v)) return 's';
+    if (/^w$|^west$|^go west$/.test(v)) return 'w';
+    if (/^u$|^up$|^upstairs$|^go up$/.test(v)) return 'u';
+    if (/^d$|^down$|^downstairs$|^go down$/.test(v)) return 'd';
+    if (/^ne$|^northeast$|^go northeast$/.test(v)) return 'ne';
+    if (/^nw$|^northwest$|^go northwest$/.test(v)) return 'nw';
+    if (/^se$|^southeast$|^go southeast$/.test(v)) return 'se';
+    if (/^sw$|^southwest$|^go southwest$/.test(v)) return 'sw';
+    return null;
+  }
+
 
   // Start z-machine
   spinupJS('moonmist.z3');
