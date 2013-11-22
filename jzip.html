@@ -259,6 +259,15 @@ button.signin {
         range.select();
       }
     }
+  
+    function getCaretPosition() {
+      if (document.selection) {
+        var sel = document.selection.createRange ();
+        sel.moveStart ('character', -$input.val().length);
+        return sel.text.length;
+      }
+      return $input[0].selectionStart || 0;
+    }
 
     $input.focus().keydown(function(e) { 
       var v = $input.val(), last;
