@@ -11,6 +11,9 @@ div.room {
   width: 100px; height: 50px;
   border: 1px solid black;
 }
+canvas {
+  position: absolute;
+}
 </style>
 </head>
 <body>
@@ -18,12 +21,48 @@ div.room {
 var automap = {"9":{"name":"driveway"},"12":{"name":"drawing room","w":124,"n":132},"13":{"name":"courtyard","s":132},"31":{"name":"Ian's entrance","s":117},"32":{"name":"dining room","s":196},"33":{"name":"your bedroom","w":131,"e":70},"67":{"name":"west hall","e":150,"w":117,"s":131},"70":{"name":"your entrance","n":179},"73":{"name":"Wendish's entrance","e":179,"w":228},"88":{"name":"sitting room","n":196},"117":{"name":"Ian's bedroom","e":67,"n":31},"124":{"name":"new great hall","u":131,"e":12,"n":132,"w":196},"131":{"name":"gallery","w":148,"e":33,"d":124},"132":{"name":"foyer","s":124,"e":12,"n":13},"136":{"name":"old great hall"},"148":{"name":"Vivien's bedroom","e":131},"150":{"name":"Hyde's bedroom","w":67},"179":{"name":"Iris's entrance","s":70,"n":73},"196":{"name":"ground-floor corridor","n":32,"s":88,"w":246},"224":{"name":"Hyde's entrance","s":150},"228":{"name":"midpoint","w":224},"246":{"name":"junction","w":136}};
 
 var map = {}, id, x=500, y=200, $body=$('body')
+  , boxw=102, boxh=52 // including border
   , dirs = {
     'n':[0,-1], 's':[0,1], 'w':[-1,0], 'e':[1,0],
     'ne':[1,-1], 'se':[1,1], 'nw':[-1,-1], 'sw':[-1,1], 
     'u':[0,-5], 'd':[0,5]
   };
 
+function connect(id1,id2,d1,d2,c) {
+  // make new canvas
+  if(c==undefined) {
+    c = {};
+    c.canvas = $('<canvas></canvas>').appendTo($body);
+    c.ctx = c.canvas[0].getContext("2d");
+  }
+
+  // connection points (2 for straight line, 4 for bezier)
+  var p=[ [ map[id1].x+0.5*boxw*(1+dirs[d1][0]) ,map[id1].y+0.5*boxh*(1+dirs[d1][1]) ], 
+          [ map[id2].x+0.5*boxw*(1+dirs[d2][0]) ,map[id2].y+0.5*boxh*(1+dirs[d2][1]) ] ];
+
+  // find min/max coordinates for canvas size/position
+  var min=[p[0][0],p[0][1]]
+    , max=[p[0][0],p[0][1]]
+    , i;
+  for( i=1; i<p.length; ++i ) {
+    if( p[i][0]<min[0] ) min[0]=p[i][0];
+    if( p[i][1]<min[1] ) min[1]=p[i][1];
+    if( p[i][0]>max[0] ) max[0]=p[i][0];
+    if( p[i][1]>max[1] ) max[1]=p[i][1];
+  }
+  c.canvas
+    .attr({ width: (max[0]-min[0]), height: (max[1]-min[1]) })
+    .css({ left: min[0]+'px', top: min[1]+'px' });
+
+  // draw connector
+  c.ctx.beginPath();
+  c.ctx.moveTo(p[0][0]-min[0],p[0][1]-min[1]);
+  c.ctx.lineTo(p[1][0]-min[0],p[1][1]-min[1]);
+  c.ctx.strokeStyle="#f00";
+  c.ctx.stroke();
+
+  return c;
+}
 function putRoom(id,x,y) {
   // is this roomalready placed on the map?
   if (id in map) { return; }
@@ -36,7 +75,10 @@ function putRoom(id,x,y) {
   }
 
   // place room on map
-  map[id] = $('<div class="room"></div>').text(automap[id].name).attr('id','room'+id).css({left:x+'px',top:y+'px'}).appendTo($body);
+  map[id] = { 
+    div: $('<div class="room"></div>').text(automap[id].name).attr('id','room'+id).css({left:x+'px',top:y+'px'}).appendTo($body), 
+    x:x, y:y 
+  };
 
   // follow exits
   for (exit in dirs) {
