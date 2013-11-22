@@ -1,0 +1,70 @@
+<html>
+<head>
+<script src="http://code.jquery.com/jquery-1.10.1.min.js"></script>
+<style>
+div.map {
+  position: absolute;
+}
+
+div.room {
+  position: absolute;
+  width: 100px; height: 50px;
+  border: 1px solid black;
+}
+</style>
+</head>
+<body>
+<script>
+var automap = {"9":{"name":"driveway"},"12":{"name":"drawing room","w":124,"n":132},"13":{"name":"courtyard","s":132},"31":{"name":"Ian's entrance","s":117},"32":{"name":"dining room","s":196},"33":{"name":"your bedroom","w":131,"e":70},"67":{"name":"west hall","e":150,"w":117,"s":131},"70":{"name":"your entrance","n":179},"73":{"name":"Wendish's entrance","e":179,"w":228},"88":{"name":"sitting room","n":196},"117":{"name":"Ian's bedroom","e":67,"n":31},"124":{"name":"new great hall","u":131,"e":12,"n":132,"w":196},"131":{"name":"gallery","w":148,"e":33,"d":124},"132":{"name":"foyer","s":124,"e":12,"n":13},"136":{"name":"old great hall"},"148":{"name":"Vivien's bedroom","e":131},"150":{"name":"Hyde's bedroom","w":67},"179":{"name":"Iris's entrance","s":70,"n":73},"196":{"name":"ground-floor corridor","n":32,"s":88,"w":246},"224":{"name":"Hyde's entrance","s":150},"228":{"name":"midpoint","w":224},"246":{"name":"junction","w":136}};
+
+var map = {}, id, x=500, y=200, $body=$('body')
+  , dirs = {
+    'n':[0,-1], 's':[0,1], 'w':[-1,0], 'e':[1,0],
+    'ne':[1,-1], 'se':[1,1], 'nw':[-1,-1], 'sw':[-1,1], 
+    'u':[0,-5], 'd':[0,5]
+  };
+
+function putRoom(id,x,y) {
+  // is this roomalready placed on the map?
+  if (id in map) { return; }
+  var room = automap[id], exit, entrance, dx, dy;
+
+  // room has manually selected coordinates
+  if ('xy' in room) {
+    x=room.xy[0];
+    y=room.xy[1];
+  }
+
+  // place room on map
+  map[id] = $('<div class="room"></div>').text(automap[id].name).attr('id','room'+id).css({left:x+'px',top:y+'px'}).appendTo($body);
+
+  // follow exits
+  for (exit in dirs) {
+    if (dirs.hasOwnProperty(exit) && (exit in room)) {
+      nextRoom = automap[room[exit]];
+      // determine displacement from exit location i
+      dx = dirs[exit][0];
+      dy = dirs[exit][1];
+      // take entrance location into account, too
+      for (entrance in dirs) {
+        if (dirs.hasOwnProperty(entrance) && (entrance in nextRoom) && nextRoom[entrance]==id) {
+          if (dx==0) { dx = -dirs[entrance][0]; }
+          if (dy==0) { dy = -dirs[entrance][1]; }
+        }
+      }
+      putRoom(room[exit],x+dx*110,y+dy*60);
+    }
+  }
+}
+
+for (id in automap) {
+  if (automap.hasOwnProperty(id)) {
+    // start a new cluster
+    putRoom(id,x,y);
+    y=y+300;
+  }
+}
+
+</script>
+</body>
+</html>
