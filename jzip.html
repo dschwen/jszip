@@ -243,7 +243,7 @@ button.signin {
 
   // hook key events up to input widget (closure for local variables)
   function setupInput() {
-    var prefix=null, currentSuggestions=[], suggestionIndex=0, typedInput='', stem='';
+    var prefix=null, currentSuggestions=[], suggestionIndex=0, tBefore, tAfter, stem='';
 
     // select a range of characters in the input box
     function selectRange(start,end) {
@@ -270,15 +270,18 @@ button.signin {
     }
 
     $input.focus().keydown(function(e) { 
-      var v = $input.val(), last;
+      var v = $input.val(), last, pos;
       //console.log(e.keyCode);
       switch(e.keyCode) {
         case 9:  // Tab
           if (prefix===null) {
             // find current last word
-            typedInput=v;
-            last = v.lastIndexOf(' ')+1
-            prefix = v.substr(last);
+            pos = getCaretPosition();
+            tBefore = v.substr(0,pos);
+            tAfter = v.substr(pos); 
+            tAfter = tAfter.substr(tAfter.indexOf(' ')+0); // drop everything till first space
+            last = tBefore.lastIndexOf(' ')+1
+            prefix = tBefore.substr(last);
             stem = v.substr(0,last);
             currentSuggestions = getAutocompleteList(prefix);
             console.log(prefix,currentSuggestions);
@@ -289,8 +292,8 @@ button.signin {
           // cycle through suggestions
           if (suggestionIndex < currentSuggestions.length) {
             var t = stem+currentSuggestions[suggestionIndex];
-            $input.val(t);
-            selectRange(typedInput.length,t.length);
+            $input.val(t+tAfter);
+            selectRange(tBefore.length,t.length);
             suggestionIndex++;
             if (suggestionIndex == currentSuggestions.length) suggestionIndex=0;
           } 
