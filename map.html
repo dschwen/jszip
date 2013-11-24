@@ -57,6 +57,74 @@ var map = {}, id, x=500, y=100, $body=$('body')
     'u':[0.2,0], 'd':[0.2,1], '0':[0.5,0.5]
   };
 
+// Connection class
+function Connection(id1,d1,id2,d2) {
+  // build canvas get context
+  this.canvas = $('<canvas></canvas>').appendTo($body);
+  this.ctx = c.canvas[0].getContext("2d");
+  this.id  = [id1, id2];
+  this.dir = [d1, d2];
+
+  // add node dots
+  this.node = [];
+  if (d1!='0') {
+    this.node.push( $('<div class="node"><div>').css({ left: boxw*nodes[d1][0]+'px', top: boxh*nodes[d1][1]+'px' }).appendTo(map[id1].div) );
+  if (d2!='0') {
+    this.node.push( $('<div class="node"><div>').css({ left: boxw*nodes[d2][0]+'px', top: boxh*nodes[d2][1]+'px' }).appendTo(map[id2].div) );
+  }
+
+  // draw the connection
+  this.update();
+
+  // register connection in connection list
+  // set references to this connection in room
+}
+Connection.prototype.update() {
+  // connection points (2 for straight line, 4 for bezier)
+  var p=[ [ map[id1].x+boxw*nodes[d1][0] ,map[id1].y+boxh*nodes[d1][1] ], 
+          [],[],
+          [ map[id2].x+boxw*nodes[d2][0] ,map[id2].y+boxh*nodes[d2][1] ] ];
+  var dx = p[0][0]-p[3][0]
+    , dy = p[0][1]-p[3][1]
+    , r = 0.5*Math.sqrt(dx*dx+dy*dy);
+
+  p[1] = [ p[0][0]+r*dirs[d1][0], p[0][1]+r*dirs[d1][1] ];
+  p[2] = [ p[3][0]+r*dirs[d2][0], p[3][1]+r*dirs[d2][1] ];
+
+  // find min/max coordinates for canvas size/position
+  var min=[p[0][0],p[0][1]]
+    , max=[p[0][0],p[0][1]]
+    , i;
+  for(i=1; i<p.length; ++i) {
+    if( p[i][0]<min[0] ) min[0]=p[i][0];
+    if( p[i][1]<min[1] ) min[1]=p[i][1];
+    if( p[i][0]>max[0] ) max[0]=p[i][0];
+    if( p[i][1]>max[1] ) max[1]=p[i][1];
+  }
+  min[0]-=5; min[1]-=5; // gutter
+  max[0]+=5; max[1]+=5;
+  this.canvas
+    .attr({ width: (max[0]-min[0]), height: (max[1]-min[1]) })
+    .css({ left: min[0]+'px', top: min[1]+'px' });
+
+  // draw connector
+  this.ctx.strokeStyle = (d2=='0')?"#f00":"#000";
+  this.ctx
+    .beginPath()
+    .moveTo(p[0][0]-min[0],p[0][1]-min[1])
+    .bezierCurveTo( p[1][0]-min[0],p[1][1]-min[1], p[2][0]-min[0],p[2][1]-min[1], p[3][0]-min[0],p[3][1]-min[1] )
+    .stroke();
+}
+Connection.prototype.remove() {
+  var i;
+  this.canvas.remove();
+  for (i=0; i<this.node.length; ++i) {
+    this.node[i].remove();
+  }
+  // unregister form connection list
+  // remove reference form rooms
+}
+
 function connect(id1,id2,d1,d2,c) {
   // make new canvas
   if(c==undefined) {
