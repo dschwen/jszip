@@ -11,6 +11,16 @@ body {
 div.map {
   position: absolute;
 }
+div.mapcontainer {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid black;
+  border-radius: 10px;
+  width: 800px;
+  height: 500px;
+  left: 100px;
+  top: 20px;
+}
 div.node {
   position: absolute;
   width: 4px; height: 4px;
@@ -39,12 +49,15 @@ canvas {
 </style>
 </head>
 <body>
+<div class="mapcontainer">
+<div id="map" class="map"></div>
+</div>
 <script>
 //var automap = {9:{"name":"driveway"},12:{"name":"drawing room","w":124,"n":132},13:{"name":"courtyard","s":132},31:{"name":"Ian's entrance","s":117},32:{"name":"dining room","s":196},33:{"name":"your bedroom","w":131,"e":70},67:{"name":"west hall","e":150,"w":117,"s":131},70:{"name":"your entrance","n":179},73:{"name":"Wendish's entrance","e":179,"w":228},88:{"name":"sitting room","n":196},117:{"name":"Ian's bedroom","e":67,"n":31},124:{"name":"new great hall","u":131,"e":12,"n":132,"w":196},131:{"name":"gallery","w":148,"e":33,"d":124},132:{"name":"foyer","s":124,"e":12,"n":13},136:{"name":"old great hall"},148:{"name":"Vivien's bedroom","e":131},150:{"name":"Hyde's bedroom","w":67},179:{"name":"Iris's entrance","s":70,"n":73},196:{"name":"ground-floor corridor","n":32,"s":88,"w":246},224:{"name":"Hyde's entrance","s":150},228:{"name":"midpoint","w":224},246:{"name":"junction","w":136}};
 
 var automap = {"7":{"name":"Wendish's bedroom","n":73},"9":{"name":"driveway"},"12":{"name":"drawing room","w":124,"n":132},"13":{"name":"courtyard","s":132},"25":{"name":"Vivien's entrance","w":177},"31":{"name":"Ian's entrance","s":117},"32":{"name":"dining room","s":196},"33":{"name":"your bedroom","w":131,"e":70},"39":{"name":"east hall","e":159,"w":7},"67":{"name":"west hall","e":150,"w":117,"s":131,"se":131},"70":{"name":"your entrance","n":179,"s":25},"73":{"name":"Wendish's entrance","e":179,"w":228},"88":{"name":"sitting room","n":196},"117":{"name":"Ian's bedroom","e":67,"n":31},"124":{"name":"new great hall","u":131,"e":12,"n":132,"w":196},"126":{"name":"Tamara's bedroom","n":222},"131":{"name":"gallery","w":148,"e":33,"d":124,"nw":67,"ne":39},"132":{"name":"foyer","s":124,"e":12,"n":13},"136":{"name":"old great hall","u":222},"148":{"name":"Vivien's bedroom","e":131},"150":{"name":"Hyde's bedroom","w":67},"151":{"name":"master bedroom"},"159":{"name":"Iris's bedroom","w":39},"177":{"name":"Tamara's landing","e":25,"w":126},"179":{"name":"Iris's entrance","s":70,"n":73},"196":{"name":"ground-floor corridor","n":32,"s":88,"w":246},"222":{"name":"first-floor corridor","n":136,"w":151},"224":{"name":"Hyde's entrance","s":150},"228":{"name":"midpoint","w":224},"246":{"name":"junction","w":136}};
 
-var map = {}, id, x=500, y=100, $body=$('body')
+var map = {}, id, x=500, y=100, $body=$('#map')
   , boxw=102, boxh=52 // including border
   , dirs = {
     'n':[0,-1], 's':[0,1], 'w':[-1,0], 'e':[1,0],
@@ -58,38 +71,44 @@ var map = {}, id, x=500, y=100, $body=$('body')
   };
 
 // Connection class
-function Connection(id1,d1,id2,d2) {
+function Connection(r1,d1,r2,d2) {
   // build canvas get context
   this.canvas = $('<canvas></canvas>').appendTo($body);
-  this.ctx = c.canvas[0].getContext("2d");
-  this.id  = [id1, id2];
-  this.dir = [d1, d2];
+  this.ctx = this.canvas[0].getContext("2d");
+  this.room  = [r1, r2];
+  this.dir   = [d1, d2];
 
   // add node dots
   this.node = [];
   if (d1!='0') {
-    this.node.push( $('<div class="node"><div>').css({ left: boxw*nodes[d1][0]+'px', top: boxh*nodes[d1][1]+'px' }).appendTo(map[id1].div) );
+    this.node.push( $('<div class="node"><div>').css({ left: boxw*nodes[d1][0]+'px', top: boxh*nodes[d1][1]+'px' }).appendTo(r1.div) );
+  }
   if (d2!='0') {
-    this.node.push( $('<div class="node"><div>').css({ left: boxw*nodes[d2][0]+'px', top: boxh*nodes[d2][1]+'px' }).appendTo(map[id2].div) );
+    this.node.push( $('<div class="node"><div>').css({ left: boxw*nodes[d2][0]+'px', top: boxh*nodes[d2][1]+'px' }).appendTo(r2.div) );
   }
 
   // draw the connection
   this.update();
 
   // register connection in connection list
+  this.num = this.static.list.length;
+  this.static.list[this.num] = this;
+
   // set references to this connection in room
+  //r1.addConnection(this.num);
+  //r2.addConnection(this.num);
 }
-Connection.prototype.update() {
+Connection.prototype.update = function() {
   // connection points (2 for straight line, 4 for bezier)
-  var p=[ [ map[id1].x+boxw*nodes[d1][0] ,map[id1].y+boxh*nodes[d1][1] ], 
+  var p=[ [ this.room[0].x+boxw*nodes[this.dir[0]][0], this.room[0].y+boxh*nodes[this.dir[0]][1] ], 
           [],[],
-          [ map[id2].x+boxw*nodes[d2][0] ,map[id2].y+boxh*nodes[d2][1] ] ];
+          [ this.room[1].x+boxw*nodes[this.dir[1]][0] ,this.room[1].y+boxh*nodes[this.dir[1]][1] ] ];
   var dx = p[0][0]-p[3][0]
     , dy = p[0][1]-p[3][1]
     , r = 0.5*Math.sqrt(dx*dx+dy*dy);
 
-  p[1] = [ p[0][0]+r*dirs[d1][0], p[0][1]+r*dirs[d1][1] ];
-  p[2] = [ p[3][0]+r*dirs[d2][0], p[3][1]+r*dirs[d2][1] ];
+  p[1] = [ p[0][0]+r*dirs[this.dir[0]][0], p[0][1]+r*dirs[this.dir[0]][1] ];
+  p[2] = [ p[3][0]+r*dirs[this.dir[1]][0], p[3][1]+r*dirs[this.dir[1]][1] ];
 
   // find min/max coordinates for canvas size/position
   var min=[p[0][0],p[0][1]]
@@ -101,21 +120,22 @@ Connection.prototype.update() {
     if( p[i][0]>max[0] ) max[0]=p[i][0];
     if( p[i][1]>max[1] ) max[1]=p[i][1];
   }
-  min[0]-=5; min[1]-=5; // gutter
+  // add gutter
+  min[0]-=5; min[1]-=5; 
   max[0]+=5; max[1]+=5;
+  // scale and position canvas
   this.canvas
     .attr({ width: (max[0]-min[0]), height: (max[1]-min[1]) })
     .css({ left: min[0]+'px', top: min[1]+'px' });
 
   // draw connector
-  this.ctx.strokeStyle = (d2=='0')?"#f00":"#000";
-  this.ctx
-    .beginPath()
-    .moveTo(p[0][0]-min[0],p[0][1]-min[1])
-    .bezierCurveTo( p[1][0]-min[0],p[1][1]-min[1], p[2][0]-min[0],p[2][1]-min[1], p[3][0]-min[0],p[3][1]-min[1] )
-    .stroke();
+  this.ctx.strokeStyle = (this.dir[1]==='0')?"#f00":"#000";
+  this.ctx.beginPath()
+  this.ctx.moveTo(p[0][0]-min[0],p[0][1]-min[1])
+  this.ctx.bezierCurveTo( p[1][0]-min[0],p[1][1]-min[1], p[2][0]-min[0],p[2][1]-min[1], p[3][0]-min[0],p[3][1]-min[1] )
+  this.ctx.stroke();
 }
-Connection.prototype.remove() {
+Connection.prototype.remove = function() {
   var i;
   this.canvas.remove();
   for (i=0; i<this.node.length; ++i) {
@@ -124,65 +144,20 @@ Connection.prototype.remove() {
   // unregister form connection list
   // remove reference form rooms
 }
-
-function connect(id1,id2,d1,d2,c) {
-  // make new canvas
-  if(c==undefined) {
-    c = { d1:null, d2: null, n1:null, n2: null };
-    c.canvas = $('<canvas></canvas>').appendTo($body);
-    c.ctx = c.canvas[0].getContext("2d");
-  }
-
-  // add dots to the connection endpoints
-  if (d1 != c.d1 ) {
-    if (c.n1) c.n1.remove();
-    c.n1 = $('<div class="node"><div>').css({ left: boxw*nodes[d1][0]+'px', top: boxh*nodes[d1][1]+'px' }).appendTo(map[id1].div);
-  }
-  if (d2 != c.d2 ) {
-    if (c.n2) c.n2.remove();
-    if (d2!='0') {
-      c.n2 = $('<div class="node"><div>').css({ left: boxw*nodes[d2][0]+'px', top: boxh*nodes[d2][1]+'px' }).appendTo(map[id2].div);
-    }
-  }
-
-  // connection points (2 for straight line, 4 for bezier)
-  var p=[ [ map[id1].x+boxw*nodes[d1][0] ,map[id1].y+boxh*nodes[d1][1] ], 
-          [],[],
-          [ map[id2].x+boxw*nodes[d2][0] ,map[id2].y+boxh*nodes[d2][1] ] ];
-  var dx = p[0][0]-p[3][0]
-    , dy = p[0][1]-p[3][1]
-    , r = 0.5*Math.sqrt(dx*dx+dy*dy);
-
-  p[1] = [ p[0][0]+r*dirs[d1][0], p[0][1]+r*dirs[d1][1] ];
-  p[2] = [ p[3][0]+r*dirs[d2][0], p[3][1]+r*dirs[d2][1] ];
-
-  // find min/max coordinates for canvas size/position
-  var min=[p[0][0],p[0][1]]
-    , max=[p[0][0],p[0][1]]
-    , i;
-  for( i=1; i<p.length; ++i ) {
-    if( p[i][0]<min[0] ) min[0]=p[i][0];
-    if( p[i][1]<min[1] ) min[1]=p[i][1];
-    if( p[i][0]>max[0] ) max[0]=p[i][0];
-    if( p[i][1]>max[1] ) max[1]=p[i][1];
-  }
-  min[0]-=5; min[1]-=5; // gutter
-  max[0]+=5; max[1]+=5;
-  c.canvas
-    .attr({ width: (max[0]-min[0]), height: (max[1]-min[1]) })
-    .css({ left: min[0]+'px', top: min[1]+'px' });
-
-  // draw connector
-  c.ctx.beginPath();
-  c.ctx.moveTo(p[0][0]-min[0],p[0][1]-min[1]);
-  //c.ctx.lineTo(p[1][0]-min[0],p[1][1]-min[1]);
-  c.ctx.bezierCurveTo( p[1][0]-min[0],p[1][1]-min[1], p[2][0]-min[0],p[2][1]-min[1], p[3][0]-min[0],p[3][1]-min[1] );
-  c.ctx.strokeStyle = (d2=='0')?"#f00":"#000";
-  c.ctx.stroke();
-
-  return c;
+Connection.prototype.static = {
+  list: []
 }
-function putRoom(id,x,y) {
+
+// Room class
+function Room() {
+  this.connections = [];
+}
+Room.prototype.addConnection = function(cnum) {
+  this.connections.push(cnum);
+}
+
+// static member function
+Room.put = function(id,x,y) {
   // is this roomalready placed on the map?
   if (id in map) { return; }
   var room = automap[id], e, exit, entrance, dx, dy;
@@ -196,7 +171,7 @@ function putRoom(id,x,y) {
   // place room on map
   map[id] = { 
     div: $('<div class="room"></div>').text(automap[id].name).attr('id','room'+id).css({left:x+'px', top:y+'px'}).appendTo($body), 
-    x:x, y:y 
+    x:x, y:y, connections: [] 
   };
 
   // hook up events
@@ -222,8 +197,8 @@ function putRoom(id,x,y) {
       var ox = e.pageX, oy = e.pageY
         , mx = map[id].x, my = map[id].y;
       $(this).addClass("isdragged");
-      $body.on("mousemove", function(e) {
-        var dx = e.pageX-ox, dy = e.pageY-oy;
+      $('body').on("mousemove", function(e) {
+        var i, dx = e.pageX-ox, dy = e.pageY-oy;
 
         // steps of 10
         dx -= dx%10;
@@ -237,12 +212,15 @@ function putRoom(id,x,y) {
           map[id].y = my+dy;
           map[id].div.css({left:map[id].x+'px', top:map[id].y+'px'})
           // update connections
+          for (i=0; i<map[id].connections.length; ++i) {
+            map[id].connections[i].update();
+          }
         }
       })
     })
     .on("mouseup", function(e){
       $(this).removeClass("isdragged")
-      $body.off("mousemove");
+      $('body').off("mousemove");
       if (dragged) {
         automap[id].xy = [map[id].x,map[id].y];
       }
@@ -265,8 +243,11 @@ function putRoom(id,x,y) {
           break;
         }
       }
-      putRoom(room[exit],x+dx*110,y+dy*60);
-      connect(id,room[exit],exit,entrance);
+      Room.put(room[exit],x+dx*110,y+dy*60);
+      //connect(id,room[exit],exit,entrance);
+      var c = new Connection( map[id], exit, map[room[exit]], entrance );
+      map[id].connections.push(c);
+      map[room[exit]].connections.push(c);
     }
   }
 }
@@ -274,7 +255,7 @@ function putRoom(id,x,y) {
 for (id in automap) {
   if (automap.hasOwnProperty(id)) {
     // start a new cluster
-    putRoom(id,x,y);
+    Room.put(id,x,y);
     y=y+500;
   }
 }
