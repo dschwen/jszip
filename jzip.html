@@ -383,11 +383,11 @@
       if (!(id in automap)) {
         automap[id] = {'name': out.buf};
         map.clear();
-        map.update();
+        map.update(automap);
       } else {
         if (update) {
           map.clear();
-          map.update();
+          map.update(automap);
         }
       }
       map.highlight(id);

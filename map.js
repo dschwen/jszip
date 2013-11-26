@@ -102,13 +102,9 @@ function Map($container) {
 
   // Room class
   function Room(id,x,y) {
-    var room = automap[id];
+    var auto = automap[id];
 
-    // room has manually selected coordinates
-    if ('xy' in room) {
-      x=room.xy[0];
-      y=room.xy[1];
-    }
+    // save current placemnet on map
 
     // place room on map
     this.div = $('<div class="room"></div>').text(automap[id].name).attr('id','room'+id).css({left:x+'px', top:y+'px'}).appendTo($view);
@@ -122,22 +118,22 @@ function Map($container) {
       .on("mouseenter", function() {
         $(this).css('background-color','#ddd');
         for (e in dirs) {
-          if (dirs.hasOwnProperty(e) && (e in automap[id])) {
-            map[automap[id][e]].div.css('background-color','#eee');
+          if (dirs.hasOwnProperty(e) && (e in auto)) {
+            map[auto[e]].div.css('background-color','#eee');
           }
         }
       })
       .on("mouseleave", function() {
         $(this).css('background-color','');
         for (e in dirs) {
-          if (dirs.hasOwnProperty(e) && (e in automap[id])) {
-            map[automap[id][e]].div.css('background-color','');
+          if (dirs.hasOwnProperty(e) && (e in auto)) {
+            map[auto[e]].div.css('background-color','');
           }
         }
       })
       .on("mousedown", function(e){
         var ox = e.pageX, oy = e.pageY      // TODO: relative to $view !
-          , mx = map[id].x, my = map[id].y;
+          , mx = that.x, my = that.y;
         $(this).addClass("isdragged");
         $('body').on("mousemove", function(e) {
           var i, dx = e.pageX-ox, dy = e.pageY-oy;
@@ -150,12 +146,12 @@ function Map($container) {
           if (dx!=0 || dy !=0 || dragged) {
             dragged=true;
             // update position
-            map[id].x = mx+dx;
-            map[id].y = my+dy;
-            map[id].div.css({left:map[id].x+'px', top:map[id].y+'px'})
+            that.x = mx+dx;
+            that.y = my+dy;
+            that.div.css({left: that.x+'px', top: that.y+'px'})
             // update connections
-            for (i=0; i<map[id].connections.length; ++i) {
-              map[id].connections[i].update();
+            for (i=0; i<that.connections.length; ++i) {
+              that.connections[i].update();
             }
           }
         })
@@ -165,7 +161,7 @@ function Map($container) {
         $(this).removeClass("isdragged")
         $('body').off("mousemove");
         if (dragged) {
-          automap[id].xy = [map[id].x,map[id].y];
+          auto.xy = [that.x,that.y];
         }
       });
   }
@@ -184,6 +180,10 @@ function Map($container) {
     var auto = automap[id], e, exit, entrance, dx, dy;
 
     // create room
+    if ('xy' in auto) {
+      x=auto.xy[0];
+      y=auto.xy[1];
+    }
     var room = new Room(id,x,y);
     map[id] = room;
 
