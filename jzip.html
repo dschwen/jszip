@@ -2,140 +2,8 @@
 <head>
 <script src="http://code.jquery.com/jquery-1.10.1.min.js"></script>
 <script src="jzip.js"></script>
-<style>
-#mapcontainer {
-  position:absolute; 
-  width: 80%; 
-  height:80%; 
-  top: 10%; 
-  margin-right: -80%; 
-  right: 20px; 
-  background-color: rgba(255,0,0,0.5); 
-  border: 1px solid black; 
-  border-radius: 20px;
-  /* transition */
-}
-#inputline {
-  position: relative;
-}
-#inputline>.prompt {
-  position: absolute;
-  top: 0; left: 0;
-}
-#inputline>input {
-  border: none;
-  width: 100%;
-  padding: 0 0 0 1.5em;
-  margin: 0;
-  background-color: #f8f8f8;
-}
-#inputline>input:focus {
-  background-color: #eee;
-  border: none;
-  outline: none;
-}
-div.output {
-  margin-bottom: 0.2em;
-  min-height: 0.5em;
-  background-color: white;
-}
-div.error {
-  margin-top: 0.7em;
-  padding: 0.2em;
-  min-height: 0.5em;
-  background-color: pink;
-  border: 1px solid red;
-  color: red;
-  font-weight: bold;
-}
-div.echo {
-  margin-bottom: 0.2em;
-  min-height: 0.5em;
-  color: gray;
-  background-color: white;
-}
-div.output, #inputline, #inputline>input, #statuswindow {
-  font-family: serif;
-  font-size: 12pt;
-}
-div.output.reverse {
-  color: white;
-  background-color: black;
-}
-div.output.bold {
-  font-weight: bold;
-}
-div.output.emph {
-  font-style: italic;
-}
-div.output.fixed {
-  font-family: monospace;
-  white-space: pre;
-}
-button.signin {
-   background-color: #DD2221; color: white; font-weight: bold;
-}
-#statuswindow {
-  display: none;
-  width: 100%;
-  background-color: black;
-  color: white;
-  font-weight: bold;
-  position: fixed;
-  top: 0; left: 0;
-  min-height: 1em;
-  padding: 0.5em 0 0.5em 0;
-      -webkit-transform: translate3d(0, 0, 0);
-      -moz-transform: translate3d(0, 0, 0);
-      -ms-transform: translate3d(0, 0, 0); /*only in IE10*/
-}
-#statuswindow>span.builtin {
-  float: right;
-  padding-right: 1em;
-  display: none;
-}
-
-#statuswindow>span.row {
-  position: absolute;
-  padding-left: 1em;
-  left:0;
-}
-
-.dialog {
-  position: fixed;
-  top: 1em;
-  border: 1px solid black;
-  box-shadow: 3px 3px 15px rgba(0,0,0,0.3);
-  padding: 0.5em;
-  background-color: white;
-}
-.dialog>h1 {
-  font-size:15pt;
-  margin: 0;
-}
-.dialog>div>h2 {
-  font-size:13pt;
-  margin: 0.5em 0 0 0;
-  clear: both
-}
-.option {
-  position: relative;
-  margin-left: 2em;
-  min-height: 2em;
-  clear: both;
-}
-.option>br {
-  clear: both
-}
-.option input[type=radio] {
-  position: relative;
-  left: -2em;
-}
-.option>button {
-  float: right;
-}
-.option.drive { display: none }
-</style>
+<script src="map.js"></script>
+<link href="jzip.css" rel="stylesheet" type="text/css">
 </head>
 <body>
 
@@ -148,6 +16,11 @@ button.signin {
 <div id="inputline">
   <input id="input" type="text">
   <span class="prompt"><b>&gt;</b></span>
+</div>
+
+<div id="mapcontainer">
+  <div class="handle"></div>
+  <div class="view"></div>
 </div>
 
 <div class="dialog" id="savedialog">
@@ -236,6 +109,7 @@ button.signin {
     , $dload = $('#downloadsave')
     , $restore = $('#restoredialog')
     , $statw = $('#statuswindow')
+    , $mapcontainer = $('#mapcontainer')
     , srows = [], s_row=1, s_col=1
     , ls = window.localStorage || null
     , lsave = {}                        // copy of localStorage savegames
@@ -244,7 +118,7 @@ button.signin {
     , history = ( ls && JSON.parse(ls.getItem('jszipHistory')||'[]') ) || []
     , hindex = history.length
     , autocomplete = {}, sortedWords = []
-    , automap = {}, lastDirection=null, lastRoom=null
+    , automap = {}, lastDirection=null, lastRoom=null, map = Map($mapcontainer)
     , hmax = 100                        // size of command history
     , moveCount = 0                     // number of commands entered
     , restoreOpts = null
@@ -253,7 +127,11 @@ button.signin {
     , CLIENT_ID = '961409091716-f13l7n45n8u0uvkjqc9vjjddndd40jgs.apps.googleusercontent.com'
     , SCOPES = 'https://www.googleapis.com/auth/drive';
 
-  automap = {9:{"name":"driveway"},12:{"name":"drawing room","w":124,"n":132},13:{"name":"courtyard","s":132},31:{"name":"Ian's entrance","s":117},32:{"name":"dining room","s":196},33:{"name":"your bedroom","w":131,"e":70},67:{"name":"west hall","e":150,"w":117,"s":131},70:{"name":"your entrance","n":179},73:{"name":"Wendish's entrance","e":179,"w":228},88:{"name":"sitting room","n":196},117:{"name":"Ian's bedroom","e":67,"n":31},124:{"name":"new great hall","u":131,"e":12,"n":132,"w":196},131:{"name":"gallery","w":148,"e":33,"d":124},132:{"name":"foyer","s":124,"e":12,"n":13},136:{"name":"old great hall"},148:{"name":"Vivien's bedroom","e":131},150:{"name":"Hyde's bedroom","w":67},179:{"name":"Iris's entrance","s":70,"n":73},196:{"name":"ground-floor corridor","n":32,"s":88,"w":246},224:{"name":"Hyde's entrance","s":150},228:{"name":"midpoint","w":224},246:{"name":"junction","w":136}};
+  automap={"7":{"name":"Wendish's bedroom","n":73,"xy":[730,60]},"9":{"name":"driveway","xy":[340,380]},"12":{"name":"drawing room","w":124,"n":132,"xy":[450,570]},"13":{"name":"courtyard","s":132,"xy":[340,440]},"25":{"name":"Vivien's entrance","w":177,"xy":[290,240]},"31":{"name":"Ian's entrance","s":117,"xy":[290,0]},"32":{"name":"dining room","s":196},"33":{"name":"your bedroom","w":131,"e":70,"xy":[950,180]},"39":{"name":"east hall","e":159,"w":7,"xy":[840,60]},"67":{"name":"west hall","e":150,"w":117,"s":131,"se":131,"xy":[400,60]},"70":{"name":"your entrance","n":179,"s":25,"xy":[1060,180]},"73":{"name":"Wendish's entrance","e":179,"w":228,"xy":[730,0]},"88":{"name":"sitting room","n":196},"117":{"name":"Ian's bedroom","e":67,"n":31,"xy":[290,60]},"124":{"name":"new great hall","u":131,"e":12,"n":132,"w":196,"xy":[340,570]},"126":{"name":"Tamara's bedroom","n":222,"xy":[70,180]},"131":{"name":"gallery","w":148,"e":33,"d":124,"nw":67,"ne":39,"xy":[620,180]},"132":{"name":"foyer","s":124,"e":12,"n":13,"xy":[340,510]},"136":{"name":"old great hall","u":222,"xy":[10,570]},"148":{"name":"Vivien's bedroom","e":131,"xy":[290,180]},"150":{"name":"Hyde's bedroom","w":67,"xy":[510,60]},"151":{"name":"master bedroom","xy":[-40,120]},"159":{"name":"Iris's bedroom","w":39,"xy":[950,60]},"177":{"name":"Tamara's landing","e":25,"w":126,"xy":[180,240]},"179":{"name":"Iris's entrance","s":70,"n":73,"xy":[1060,60]},"196":{"name":"ground-floor corridor","n":32,"s":88,"w":246},"222":{"name":"first-floor corridor","n":136,"w":151,"xy":[70,120]},"224":{"name":"Hyde's entrance","s":150,"xy":[510,0]},"228":{"name":"midpoint","w":224,"xy":[620,0]},"246":{"name":"junction","w":136}};
+
+  automap = {"7":{"name":"Wendish's bedroom","n":73,"xy":[730,60]},"9":{"name":"driveway","xy":[340,380]},"12":{"name":"drawing room","w":124,"n":132,"xy":[450,570]},"13":{"name":"courtyard","s":132,"xy":[340,440]},"14":{"name":"library landing","s":177,"xy":[180,0],"e":31,"w":146},"25":{"name":"Vivien's entrance","w":177,"xy":[290,240]},"31":{"name":"Ian's entrance","s":117,"xy":[290,0],"w":14,"e":224},"32":{"name":"dining room","s":196},"33":{"name":"your bedroom","w":131,"e":70,"xy":[950,180]},"39":{"name":"east hall","e":159,"w":7,"xy":[840,60]},"54":{"name":"office","xy":[60,120],"w":222},"67":{"name":"west hall","e":150,"w":117,"s":131,"xy":[400,60]},"70":{"name":"your entrance","n":179,"s":25,"xy":[1060,180]},"73":{"name":"Wendish's entrance","e":179,"w":228,"xy":[730,0]},"88":{"name":"sitting room","n":196},"107":{"name":"chapel","n":252,"xy":[-170,-30]},"117":{"name":"Ian's bedroom","e":67,"n":31,"xy":[290,60]},"124":{"name":"new great hall","u":131,"e":12,"n":132,"w":196,"xy":[340,570]},"126":{"name":"Tamara's bedroom","n":222,"xy":[60,200]},"131":{"name":"gallery","w":148,"e":33,"d":124,"nw":67,"ne":39,"xy":[620,180]},"132":{"name":"foyer","s":124,"e":12,"n":13,"xy":[340,510]},"136":{"name":"old great hall","u":222,"xy":[10,570]},"146":{"name":"library","ne":14,"xy":[60,40],"s":222},"148":{"name":"Vivien's bedroom","e":131,"xy":[290,180]},"150":{"name":"Hyde's bedroom","w":67,"xy":[510,60]},"151":{"name":"master bedroom","xy":[-220,120]},"159":{"name":"Iris's bedroom","w":39,"xy":[950,60]},"177":{"name":"Tamara's landing","e":25,"w":126,"xy":[180,240],"n":14},"179":{"name":"Iris's entrance","s":70,"n":73,"xy":[1060,60]},"196":{"name":"ground-floor corridor","n":32,"s":88,"w":246},"222":{"name":"first-floor corridor","n":136,"w":151,"xy":[-60,120],"ne":146,"e":54,"se":126,"s":252},"224":{"name":"Hyde's entrance","s":150,"xy":[510,0],"w":31,"e":228},"228":{"name":"midpoint","w":224,"xy":[620,0],"e":73},"246":{"name":"junction","w":136},"252":{"name":"second-floor corridor","d":222,"xy":[-170,-90],"s":107}};
+
+  automap = {"2":{"name":"dungeon","e":235,"nw":186},"7":{"name":"Wendish's bedroom","n":73,"xy":[730,60]},"9":{"name":"driveway","xy":[340,380]},"12":{"name":"drawing room","w":124,"n":132,"xy":[450,570]},"13":{"name":"courtyard","s":132,"xy":[340,440]},"14":{"name":"library landing","s":177,"xy":[180,0],"e":31,"w":146,"d":155},"25":{"name":"Vivien's entrance","w":177,"xy":[290,240],"e":70,"n":148},"27":{"name":"Jack's landing","e":40,"xy":[-330,240],"n":151},"30":{"name":"kitchen","w":235,"xy":[100,750],"u":243},"31":{"name":"Ian's entrance","s":117,"xy":[290,0],"w":14,"e":224},"32":{"name":"dining room","s":196,"w":243},"33":{"name":"your bedroom","w":131,"e":70,"xy":[950,180]},"39":{"name":"east hall","e":159,"w":7,"xy":[840,60],"sw":131},"40":{"name":"tower passage","w":27,"e":170,"xy":[-220,240],"u":177},"54":{"name":"office","xy":[60,120],"w":222},"67":{"name":"west hall","e":150,"w":117,"s":131,"xy":[400,60]},"70":{"name":"your entrance","n":179,"s":25,"xy":[1060,180],"w":33},"73":{"name":"Wendish's entrance","e":179,"w":228,"xy":[730,0]},"88":{"name":"sitting room","n":196},"107":{"name":"chapel","n":252,"xy":[-170,-30]},"117":{"name":"Ian's bedroom","e":67,"n":31,"xy":[290,60]},"124":{"name":"new great hall","u":131,"e":12,"n":132,"w":196,"xy":[340,570]},"126":{"name":"Tamara's bedroom","n":222,"xy":[60,200],"se":177},"131":{"name":"gallery","w":148,"e":33,"d":124,"nw":67,"ne":39,"xy":[620,180]},"132":{"name":"foyer","s":124,"e":12,"n":13,"xy":[340,510]},"136":{"name":"old great hall","u":222,"xy":[-150,570]},"146":{"name":"library","ne":14,"xy":[60,40],"s":222},"148":{"name":"Vivien's bedroom","e":131,"xy":[290,180],"s":25},"150":{"name":"Hyde's bedroom","w":67,"xy":[510,60]},"151":{"name":"master bedroom","xy":[-220,120],"e":222,"sw":27},"155":{"name":"dining passage","xy":[10,510],"u":14,"e":243},"159":{"name":"Iris's bedroom","w":39,"xy":[950,60]},"170":{"name":"sitting passage","xy":[-110,240],"w":40},"177":{"name":"Tamara's landing","e":25,"w":126,"xy":[180,240],"n":14,"d":40},"179":{"name":"Iris's entrance","s":70,"n":73,"xy":[1060,60]},"186":{"name":"path","e":2},"196":{"name":"ground-floor corridor","n":32,"s":88,"w":246},"222":{"name":"first-floor corridor","n":136,"w":151,"xy":[-60,120],"ne":146,"e":54,"se":126,"s":252},"224":{"name":"Hyde's entrance","s":150,"xy":[510,0],"w":31,"e":228},"228":{"name":"midpoint","w":224,"xy":[620,0],"e":73},"235":{"name":"basement","w":2,"xy":[-10,750],"e":30},"243":{"name":"backstairs","xy":[120,510],"w":155,"e":32,"d":30},"246":{"name":"junction","w":136},"252":{"name":"second-floor corridor","d":222,"xy":[-170,-90],"s":107}};
 
   // hook key events up to input widget (closure for local variables)
   function setupInput() {
@@ -384,6 +262,18 @@ button.signin {
   $('#inputline').hide();
   $('#readkey').hide();
 
+  // setup map widget
+  function setupMap() {
+    var shown=false;
+    $('.handle',$mapcontainer).click(function(){
+      shown = !shown;
+      $mapcontainer.css('right',shown?'80%':'');
+    });
+    map.update(automap);
+  }
+
+  setupMap();
+
   // get saves from localStorage
   if (ls) {
     lsave = JSON.parse(ls.getItem('jszipSaves')||'{}');
@@ -482,19 +372,34 @@ button.signin {
     console.log('jsSetAttribute',out);
   }
   window['jsRegisterLocation'] = function(id) {
+    var update=false;
+
     // store current room number and name
     if (id!==lastRoom) {
       // add transition to last room
       if (lastRoom!==null && (lastRoom in automap) && lastDirection!==null) {
-        automap[lastRoom][lastDirection]=id;
+        if (automap[lastRoom][lastDirection] !== id) {
+          automap[lastRoom][lastDirection]=id;
+          update = true;
+        }
       }
       // add new room
       if (!(id in automap)) {
         automap[id] = {'name': out.buf};
+        map.clear();
+        map.update(automap);
+      } else {
+        if (update) {
+          map.clear();
+          map.update(automap);
+        }
       }
+      map.highlight(id);
       lastRoom=id;
     }
-    console.log(automap);
+    // update if anything has changed
+    if (update) {
+    }
   }
 
 

@@ -1,0 +1,193 @@
+
+body {
+  -webkit-user-select: none;
+  -moz-user-select: -moz-none;
+  -ms-user-select: none;
+  user-select: none;
+}
+div.map {
+  position: absolute;
+}
+div.node {
+  position: absolute;
+  width: 4px; height: 4px;
+  margin: -4px 0 0 -4px;
+  border-radius: 50%;
+  background-color: gray;
+  border: 1px solid black;
+}
+div.room {
+  position: absolute;
+  width: 90px; height: 40px;
+  border: 1px solid black;
+  background-color: white;
+  z-index: 1;
+  padding: 5px;
+  font-size: 10pt;
+}
+div.room.isdragged {
+  border: 1px dashed black;
+  z-index: 100;
+  box-shadow: 3px 3px 15px rgba(0,0,0,0.3);
+}
+div.room.current {
+  box-shadow: 0px 0px 20px red;
+}
+canvas {
+  position: absolute;
+}
+
+#mapcontainer {
+  position:fixed; 
+  width: 80%; 
+  height:85%; 
+  top: 7.5%; 
+  margin-right: -80%; 
+  right: 10px; 
+  background-color: white; 
+  border: 1px solid gray;
+  border-right: none;
+  border-radius: 20px 0 0 20px;
+  overflow: hidden;
+  /* transition */
+  -moz-transition: right 0.5s;
+  -webkit-transition: right 0.5s;
+  -o-transition: right 0.5s;
+  transition: right 0.5s;
+}
+#mapcontainer>.handle {
+  width: 10px; 
+  height: 100%;
+  /*margin-top: -10%;
+  top: 50%;*/
+  top: 0;
+  background-color: gray;
+  left: 0;
+  position: absolute;
+  z-index: 20;
+  background-image: linear-gradient(to left, #FFFFFF 0%, #8C8C8C 100%);
+}
+#mapcontainer>.view {
+  position: absolute;
+}
+
+#inputline {
+  position: relative;
+}
+#inputline>.prompt {
+  position: absolute;
+  top: 0; left: 0;
+}
+#inputline>input {
+  border: none;
+  width: 100%;
+  padding: 0 0 0 1.5em;
+  margin: 0;
+  background-color: #f8f8f8;
+}
+#inputline>input:focus {
+  background-color: #eee;
+  border: none;
+  outline: none;
+}
+div.output {
+  margin-bottom: 0.2em;
+  min-height: 0.5em;
+  background-color: white;
+}
+div.error {
+  margin-top: 0.7em;
+  padding: 0.2em;
+  min-height: 0.5em;
+  background-color: pink;
+  border: 1px solid red;
+  color: red;
+  font-weight: bold;
+}
+div.echo {
+  margin-bottom: 0.2em;
+  min-height: 0.5em;
+  color: gray;
+  background-color: white;
+}
+div.output, #inputline, #inputline>input, #statuswindow {
+  font-family: serif;
+  font-size: 12pt;
+}
+div.output.reverse {
+  color: white;
+  background-color: black;
+}
+div.output.bold {
+  font-weight: bold;
+}
+div.output.emph {
+  font-style: italic;
+}
+div.output.fixed {
+  font-family: monospace;
+  white-space: pre;
+}
+button.signin {
+   background-color: #DD2221; color: white; font-weight: bold;
+}
+#statuswindow {
+  display: none;
+  width: 100%;
+  background-color: black;
+  color: white;
+  font-weight: bold;
+  position: fixed;
+  top: 0; left: 0;
+  min-height: 1em;
+  padding: 0.5em 0 0.5em 0;
+      -webkit-transform: translate3d(0, 0, 0);
+      -moz-transform: translate3d(0, 0, 0);
+      -ms-transform: translate3d(0, 0, 0); /*only in IE10*/
+}
+#statuswindow>span.builtin {
+  float: right;
+  padding-right: 1em;
+  display: none;
+}
+
+#statuswindow>span.row {
+  position: absolute;
+  padding-left: 1em;
+  left:0;
+}
+
+.dialog {
+  position: fixed;
+  top: 1em;
+  border: 1px solid black;
+  box-shadow: 3px 3px 15px rgba(0,0,0,0.3);
+  padding: 0.5em;
+  background-color: white;
+}
+.dialog>h1 {
+  font-size:15pt;
+  margin: 0;
+}
+.dialog>div>h2 {
+  font-size:13pt;
+  margin: 0.5em 0 0 0;
+  clear: both
+}
+.option {
+  position: relative;
+  margin-left: 2em;
+  min-height: 2em;
+  clear: both;
+}
+.option>br {
+  clear: both
+}
+.option input[type=radio] {
+  position: relative;
+  left: -2em;
+}
+.option>button {
+  float: right;
+}
+.option.drive { display: none }
