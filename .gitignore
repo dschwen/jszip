@@ -1,4 +1,4 @@
-*.bc
-*.o
+src/*.bc
 *~
+src/jzip.js
 jzip.js

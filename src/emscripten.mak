@@ -61,7 +61,7 @@ LIBS = -lz -ltermcap
 
 INC = ztypes.h jzip.h
 
-OBJS = jzip.bc control.bc extern.bc fileio.bc input.bc interpre.bc license.bc \
+OBJS =  jzip.bc control.bc extern.bc fileio.bc input.bc interpre.bc license.bc \
         math.bc memory.bc object.bc operand.bc osdepend.bc property.bc quetzal.bc \
 	screen.bc text.bc variable.bc emscriptenio.bc
 
@@ -72,9 +72,9 @@ OBJS = jzip.bc control.bc extern.bc fileio.bc input.bc interpre.bc license.bc \
 all  : jzip.js
 
 jzip.js : $(OBJS) ztypes.h jzip.h
-	$(CC) -o $@ $(CFLAGS) $(OBJS) $(LIBS) --embed-file moonmist.z3  --js-transform ./fixcurl.sh -s EXPORTED_FUNCTIONS="['_spinupJS','_interpret','_cleanupJS','_jsrGetLine','_jsrInputCharacter','_z_restore']"
-	#$(CC) -o $@ $(CFLAGS) $(OBJS) $(LIBS) --embed-file curses.z5  --js-transform ./fixcurl.sh -s EXPORTED_FUNCTIONS="['_spinupJS','_interpret','_cleanupJS','_jsrGetLine','_jsrInputCharacter','_z_restore']"
-	#$(CC) -o $@ $(CFLAGS) $(OBJS) $(LIBS) --embed-file zork2.z3  --js-transform ./fixcurl.sh -s EXPORTED_FUNCTIONS="['_spinupJS','_interpret','_cleanupJS','_jsrGetLine','_jsrInputCharacter','_z_restore']"
+	$(CC) -o $@ $(CFLAGS) $(OBJS) $(LIBS) --embed-file moonmist.z3  --js-transform ../fixcurl.sh -s EXPORTED_FUNCTIONS="['_spinupJS','_interpret','_cleanupJS','_jsrGetLine','_jsrInputCharacter','_z_restore']"
+	#$(CC) -o $@ $(CFLAGS) $(OBJS) $(LIBS) --embed-file curses.z5  --js-transform ../fixcurl.sh -s EXPORTED_FUNCTIONS="['_spinupJS','_interpret','_cleanupJS','_jsrGetLine','_jsrInputCharacter','_z_restore']"
+	#$(CC) -o $@ $(CFLAGS) $(OBJS) $(LIBS) --embed-file zork2.z3  --js-transform ../fixcurl.sh -s EXPORTED_FUNCTIONS="['_spinupJS','_interpret','_cleanupJS','_jsrGetLine','_jsrInputCharacter','_z_restore']"
 
 jzexe : jzexe.bc jzexe.h
 	$(CC) -o $@ $(CFLAGS) jzexe.o
