@@ -1,7 +1,7 @@
 jzip.js
 =======
 
-An interactive fiction Z-Machine interpreter top play Infocom-style text adventures in your browser.
+An interactive fiction Z-Machine interpreter to play Infocom-style text adventures in your browser.
 
 Jzip.js is based on an emscripten cross-compilation of the commandline Z-Machine interpreter [jzip](http://jzip.sourceforge.net/). On
 top of that I added a whole bunch of functions to make playing in the webbrowser more convenient.
@@ -27,3 +27,8 @@ Screenshot
 
 ![Moonmist on jzip.js](http://i.imgur.com/TAdcFt7.png)
 
+Bugs
+----
+
+Currently only z3 games are supported due to the lack of fixed font terminal emulation. Games beyond z3 position
+the cursor absolutely to darw their own status lines.
