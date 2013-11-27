@@ -110,10 +110,10 @@ Connection.prototype.update = function() {
     , dy = p[0][1]-p[3][1]
     , r; 
 
-  r = 0.5*Math.abs( dx*this._dirs[this.dir[0]][0] + dy*this._dirs[this.dir[0]][1] );
+  r = 0.75*Math.abs( dx*this._dirs[this.dir[0]][0] + dy*this._dirs[this.dir[0]][1] );
   p[1] = [ p[0][0]+r*this._dirs[this.dir[0]][0], 
            p[0][1]+r*this._dirs[this.dir[0]][1] ];
-  r = 0.5*Math.abs( dx*this._dirs[this.dir[1]][0] + dy*this._dirs[this.dir[1]][1] );
+  r = 0.75*Math.abs( dx*this._dirs[this.dir[1]][0] + dy*this._dirs[this.dir[1]][1] );
   p[2] = [ p[3][0]+r*this._dirs[this.dir[1]][0], 
            p[3][1]+r*this._dirs[this.dir[1]][1] ];
 
