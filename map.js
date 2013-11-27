@@ -181,8 +181,8 @@ function Map($container) {
 
     // create room
     if ('xy' in auto) {
-      x=auto.xy[0];
-      y=auto.xy[1];
+      x=1*auto.xy[0];
+      y=1*auto.xy[1];
     }
     var room = new Room(id,x,y);
     map[id] = room;
