@@ -15,6 +15,7 @@ top of that I added a whole bunch of functions to make playing in the webbrowser
   * Map updated while you play (new rooms are added, room connections updated)
   * Current room highlighted on the map
   * Drag the rooms around to lay out the map like you want it
+  * Quickly move between rooms using the numpad and/or n,e,w,s,u,d keys
 
 Example installation
 --------------------
