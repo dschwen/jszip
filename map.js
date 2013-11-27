@@ -1,6 +1,7 @@
+// map module
 function Map($container) {
 
-  var map = {}, id, x=500, y=100, $view=$('.view',$container)
+  var map = {}, id, $view=$('.view',$container)
     , boxw=102, boxh=52 // including border
     , dirs = {
       'n':[0,-1], 's':[0,1], 'w':[-1,0], 'e':[1,0],
@@ -103,7 +104,7 @@ function Map($container) {
   // Room class
   function Room(id,x,y) {
     var auto = automap[id];
-
+console.log(auto.name,x,y);
     // save current placemnet on map
 
     // place room on map
@@ -181,8 +182,8 @@ function Map($container) {
 
     // create room
     if ('xy' in auto) {
-      x=1*auto.xy[0];
-      y=1*auto.xy[1];
+      x=auto.xy[0];
+      y=auto.xy[1];
     }
     var room = new Room(id,x,y);
     map[id] = room;
@@ -232,8 +233,9 @@ function Map($container) {
 
   function update(a) {
     automap = a;
+    var x=500, y=100;
     for (id in automap) {
-      if (automap.hasOwnProperty(id)) {
+      if (automap.hasOwnProperty(id) && !(id in map)) {
         // start a new cluster
         Room.put(id,x,y);
         y=y+500;
@@ -246,6 +248,10 @@ function Map($container) {
     map = {};
   }
 
+  function center(id) {
+    // center smoothly on current room
+  }
+
   function highlight(id) {
     $('.current',$view).removeClass('current');
     $('#room'+id,$view).addClass('current');
@@ -254,6 +260,7 @@ function Map($container) {
   return {
     update: update,
     clear: clear,
+    center: center,
     highlight: highlight
   }
 }
