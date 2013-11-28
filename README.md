@@ -31,4 +31,4 @@ Bugs
 ----
 
 Currently only z3 games are supported due to the lack of fixed font terminal emulation. Games beyond z3 position
-the cursor absolutely to darw their own status lines.
+the cursor absolutely to draw their own status lines.
