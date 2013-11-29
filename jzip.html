@@ -337,8 +337,9 @@
   // functions to be called from the c code
   var out = window['output']={ buf:'', text: true, reverse: false, bold: false, emph: false, fixed: false }
     , argstore = window['argstore']={};
+
   var writeChar = window['jsWriteChar'] = function(c) {
-    //console.log('jsWriteChar',c,String.fromCharCode(c));
+    if(String.fromCharCode(c)=='>') console.log('jsWriteChar',c,String.fromCharCode(c));
     if (c==13 || c==10 ) {
       if (out.text) {
         var $line = $('<div class="output"></div>').text(out.buf).insertBefore($('#inputline'));
@@ -375,11 +376,32 @@
       out.buf='';
     }
   }
+  window['jsSetWindow'] = function(w) {
+    var newwin;
+    console.log('z_set_window(',w,')');
+    if (w==='status') {
+      newwin=false;
+    } else if (w==='text') {
+      newwin=true;
+    } else {
+      throw Error("Unknown window type");
+    }
+    // flush on window change from text->status
+    if (out.text && !newwin) {
+      // is this just the prompt char?
+      if (out.buf==='>') {
+        out.buf='';
+      } else {
+        writeChar(13);
+      }
+    }
+    out.text = newwin;
+  }
   window['jsBlankStatus'] = function() {
     console.log('blank_status()');
   }
   window['jsMoveCursor'] = function(row,col) {
-    console.log(out.text,row,col,out.buf);
+    console.log("z_set_cursor",out.text,row,col,out.buf);
     if (!out.text) {
       s_row=row;
       s_col=col;
@@ -403,10 +425,11 @@
     out.bold    = ~~bold;
     out.emph    = ~~emph;
     out.fixed   = ~~fixed;
-    console.log('jsSetAttribute',out);
+    //console.log('jsSetAttribute',JSON.stringify(out));
   }
-  window['jsRegisterLocation'] = function(id) {
-    var update=false;
+  window['jsRegisterLocation'] = function(id,name) {
+    var update=false
+      , name = name || out.buf;
 
     // store current room number and name
     if (id!==lastRoom) {
@@ -419,7 +442,7 @@
       }
       // add new room
       if (!(id in automap)) {
-        automap[id] = {'name': out.buf};
+        automap[id] = {'name': name};
         map.clear();
         map.update(automap);
       } else {
@@ -541,6 +564,9 @@
     , jsrGetLine = Module.cwrap('jsrGetLine', 'number', ['number','number','number','number','number','number'])
     , jsrInputCharacter = Module.cwrap('jsrInputCharacter', 'number', ['number','number'])
     , zRestore = Module.cwrap('z_restore', 'number', ['number','number','number','number']);
+
+  window['zPrintObj'] = Module.cwrap('z_print_obj', 'number', ['number']);
+  window['zLoadVariable'] = Module.cwrap('load_variable', 'number', ['number']);
 
   // helper functions 
   function scrollBottom() {
@@ -816,12 +842,22 @@
     return null;
   }
 
+  // prepare global variable object
+  window.globalvars = {};
 
   // Start z-machine
   //spinupJS('catseye.z3');
   //spinupJS('moonmist.z3');
   //spinupJS('zork2.z3');
   spinupJS('curses.z5');
+
+  // at this point the globalvars object is populated
+  /*
+  if (h_version>3) {
+    // search for player object
+    "(self object)" "yourself"
+  }
+  */
 
   // call interpreter
   function step() {

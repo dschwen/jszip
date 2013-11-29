@@ -289,6 +289,10 @@ int get_line( char *cbuf, zword_t timeout, zword_t action_routine )
 
 #ifdef EMSCRIPTEN
       asm( "window['argstore']['arg_list']=[%0,%1]" : : "r"(arg_list[0]),"r"(arg_list[1]) );
+      if ( load_variable( 16 ) != 0 ) {
+        z_print_obj( load_variable( 16 ) );
+        asm("window['jsRegisterLocation'](%0)"::"r"(load_variable( 16 )) );
+      }
       asm( "throw { task:'getLine', cbuf: %0, buffer: %1, timeout: %2, action_routine: %3 };" : : "r"(cbuf),"r"(buffer),"r"(timeout),"r"(action_routine) );
    }
    return 0; // please compiler, never reached
@@ -317,6 +321,10 @@ void jsrGetLine(char* cbuf, char* buffer, int read_size, int c, int timeout, int
   asm( "window['argstore']['arg_list'][0]" : "=r"(arg_list[0]) : );
   asm( "window['argstore']['arg_list'][1]" : "=r"(arg_list[1]) : );
   if( c == -1 && ( status = z_call( 1, arg_list, ASYNC ) ) == 0 ) {
+      if ( load_variable( 16 ) != 0 ) {
+        z_print_obj( load_variable( 16 ) );
+        asm("window['jsRegisterLocation'](%0)"::"r"(load_variable( 16 )) );
+      }
       asm( "throw { task:'getLine', cbuf: %0, buffer: %1, timeout: %2, action_routine: %3 };" : : "r"(cbuf),"r"(buffer),"r"(timeout),"r"(action_routine) );
   }
   if(status) read_size=0;

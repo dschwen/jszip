@@ -57,8 +57,8 @@ void z_set_window( zword_t w )
    if ( screen_window == STATUS_WINDOW )
    {
 #ifdef EMSCRIPTEN
-  EM_ASM( window['output']['text']=false; );
-#else
+  EM_ASM( window['jsSetWindow']('status'); );
+#endif
 
       /* Status window: disable formatting and select status window */
 
@@ -72,13 +72,12 @@ void z_set_window( zword_t w )
          move_cursor( 2, 1 );
       else
          move_cursor( 1, 1 );
-#endif
    }
    else
    {
 #ifdef EMSCRIPTEN
-  EM_ASM( window['output']['text']=true; );
-#else
+  EM_ASM( window['jsSetWindow']('text'); );
+#endif
 
       /* Text window: enable formatting and select text window */
 
@@ -91,7 +90,6 @@ void z_set_window( zword_t w )
       get_cursor_position( &row, &col );
       if ( row <= status_size )
          move_cursor( status_size + 1, 1 );
-#endif
    }
 
    /* Force text attribute to normal rendition */

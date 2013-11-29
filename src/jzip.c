@@ -182,4 +182,10 @@ static void configure( zbyte_t min_version, zbyte_t max_version )
    }
    datap = NULL;
 
+#ifdef EMSCRIPTEN
+   asm( "window['globalvars']['h_type']=%0;" ::"r"(h_type) );
+   asm( "window['globalvars']['h_config']=%0;" ::"r"(h_config) );
+   asm( "window['globalvars']['h_version']=%0;" ::"r"(h_version) );
+   asm( "window['globalvars']['h_checksum']=%0;" ::"r"(h_checksum) );
+#endif
 }                               /* configure */
