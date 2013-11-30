@@ -34,7 +34,9 @@
 #define NEXT 1
 #define CHILD 2
 
+#ifndef EMSCRIPTEN
 static zword_t read_object( zword_t objp, int field );
+#endif
 static void write_object( zword_t objp, int field, zword_t value );
 
 /*
@@ -402,7 +404,10 @@ void z_clear_attr( zword_t obj, zword_t bit )
 
 }                               /* z_clear_attr */
 
-static zword_t read_object( zword_t objp, int field )
+#ifndef EMSCRIPTEN
+static 
+#endif
+zword_t read_object( zword_t objp, int field )
 {
    zword_t value;
 

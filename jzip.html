@@ -117,7 +117,7 @@
     , history = ( ls && JSON.parse(ls.getItem('jszipHistory')||'[]') ) || []
     , hindex = history.length
     , autocomplete = {}, sortedWords = []
-    , automap = {}, lastDirection=null, lastRoom=null, map = Map($mapcontainer)
+    , automap = {}, lastDirection=null, lastRoom=null, map = Map($mapcontainer), playerObject=null
     , hmax = 100                        // size of command history
     , moveCount = 0                     // number of commands entered
     , restoreOpts = null
@@ -134,7 +134,10 @@
       H_SCREEN_BOTTOM: 37,
       H_MAX_CHAR_WIDTH: 38,
       H_MAX_CHAR_HEIGHT: 39,
-      H_FILLER1: 40
+      H_FILLER1: 40,
+      'PARENT': 0,
+      NEXT: 1,
+      CHILD: 2
     };
 
 //  automap={"7":{"name":"Wendish's bedroom","n":73,"xy":[730,60]},"9":{"name":"driveway","xy":[340,380]},"12":{"name":"drawing room","w":124,"n":132,"xy":[450,570]},"13":{"name":"courtyard","s":132,"xy":[340,440]},"25":{"name":"Vivien's entrance","w":177,"xy":[290,240]},"31":{"name":"Ian's entrance","s":117,"xy":[290,0]},"32":{"name":"dining room","s":196},"33":{"name":"your bedroom","w":131,"e":70,"xy":[950,180]},"39":{"name":"east hall","e":159,"w":7,"xy":[840,60]},"67":{"name":"west hall","e":150,"w":117,"s":131,"se":131,"xy":[400,60]},"70":{"name":"your entrance","n":179,"s":25,"xy":[1060,180]},"73":{"name":"Wendish's entrance","e":179,"w":228,"xy":[730,0]},"88":{"name":"sitting room","n":196},"117":{"name":"Ian's bedroom","e":67,"n":31,"xy":[290,60]},"124":{"name":"new great hall","u":131,"e":12,"n":132,"w":196,"xy":[340,570]},"126":{"name":"Tamara's bedroom","n":222,"xy":[70,180]},"131":{"name":"gallery","w":148,"e":33,"d":124,"nw":67,"ne":39,"xy":[620,180]},"132":{"name":"foyer","s":124,"e":12,"n":13,"xy":[340,510]},"136":{"name":"old great hall","u":222,"xy":[10,570]},"148":{"name":"Vivien's bedroom","e":131,"xy":[290,180]},"150":{"name":"Hyde's bedroom","w":67,"xy":[510,60]},"151":{"name":"master bedroom","xy":[-40,120]},"159":{"name":"Iris's bedroom","w":39,"xy":[950,60]},"177":{"name":"Tamara's landing","e":25,"w":126,"xy":[180,240]},"179":{"name":"Iris's entrance","s":70,"n":73,"xy":[1060,60]},"196":{"name":"ground-floor corridor","n":32,"s":88,"w":246},"222":{"name":"first-floor corridor","n":136,"w":151,"xy":[70,120]},"224":{"name":"Hyde's entrance","s":150,"xy":[510,0]},"228":{"name":"midpoint","w":224,"xy":[620,0]},"246":{"name":"junction","w":136}};
@@ -149,7 +152,6 @@
 
     // select a range of characters in the input box
     function selectRange(start,end) {
-      console.log('select',start,end);
       var i=$input[0], v = $input.val(), l=v.length;
       if (i.setSelectionRange) {
         i.focus();
@@ -173,7 +175,7 @@
 
     $input.focus().keydown(function(e) { 
       var v = $input.val(), last, pos;
-      console.log(e.keyCode);
+      //console.log(e.keyCode);
       switch(e.keyCode) {
         case 9:  // Tab
           if (prefix===null) {
@@ -186,9 +188,9 @@
             prefix = tBefore.substr(last);
             stem = v.substr(0,last);
             currentSuggestions = getAutocompleteList(prefix);
-            console.log(prefix,currentSuggestions);
+            //console.log(prefix,currentSuggestions);
             suggestionIndex=0;
-            console.log(getCaretPosition());
+            //console.log(getCaretPosition());
           }
 
           // cycle through suggestions
@@ -254,7 +256,7 @@
 
   // hook key events up to document
   $(document).keydown(function(e) {
-    console.log(e.keyCode);
+    //console.log(e.keyCode);
     if (keyCallback) {
       keyCallback(e.keyCode);
     } else {
@@ -363,7 +365,7 @@
       out.buf = openAttributes()
     }
 
-    if(String.fromCharCode(c)=='>') console.log('jsWriteChar',c,String.fromCharCode(c));
+    //if(String.fromCharCode(c)=='>') console.log('jsWriteChar',c,String.fromCharCode(c));
 
     if (window['globalvars']['h_type']<=3) {
       // Z3 and below
@@ -402,10 +404,10 @@
       t+=String.fromCharCode(c);
       l.push(c)
     } 
-    if (l.length>0) console.log('printstring',p-s,s,p,t,l);
+    //if (l.length>0) console.log('printstring',p-s,s,p,t,l);
   }
   window['jsFlushTo'] = function(s) {
-    console.log('jsFlushTo(',s,')');
+    //console.log('jsFlushTo(',s,')');
     var c=$('#'+s);
     if (out.buf=='') {
       c.hide();
@@ -416,7 +418,7 @@
   }
   window['jsSetWindow'] = function(w) {
     var newwin;
-    console.log('z_set_window(',w,')');
+    //console.log('z_set_window(',w,')');
     if (w==='status') {
       newwin=false;
     } else if (w==='text') {
@@ -439,15 +441,13 @@
     console.log('blank_status()');
   }
   window['jsMoveCursor'] = function(row,col) {
-    console.log("z_set_cursor",out.text,row,col,out.buf);
-    if (!out.text) {
-      out.row=row;
-      out.col=col;
-    }
+    //console.log("z_set_cursor",out.text,row,col,out.buf);
+    out.row=row;
+    out.col=col;
   }
   window['jsSplitWindow'] = function(lines) {
     var cols = out.emptyLine.length;
-    console.log('z_split_window',lines);
+    //console.log('z_split_window',lines);
     $('body').css('padding-top',(lines+1)+'em');
     if (lines) {
       $statw.show().css('height',lines+'em');
@@ -475,7 +475,8 @@
     out.buf += openAttributes();
     //console.log('jsSetAttribute',JSON.stringify(out));
   }
-  window['jsRegisterLocation'] = function(id,name) {
+  var registerLocation = window['jsRegisterLocation'] = function(id,name) {
+    console.log('register location:',id,name);
     var update=false
       , name = name || out.buf;
 
@@ -514,6 +515,12 @@
     
     // prepare Autocomplete word list
     prepareAutocomplete();
+
+    // automapping based on heuristically determined playerObject Z5,Z8 games
+    if (playerObject!==null) {
+      var p = parentObject(playerObject);
+      registerLocation(p,objectName(p));
+    }
 
     // display input line
     $('#inputline').show();
@@ -612,9 +619,11 @@
     , jsrGetLine = Module.cwrap('jsrGetLine', 'number', ['number','number','number','number','number','number'])
     , jsrInputCharacter = Module.cwrap('jsrInputCharacter', 'number', ['number','number'])
     , jsrResizeWindow = Module.cwrap('jsrResizeWindow', 'number', ['number'])
-    , zRestore = Module.cwrap('z_restore', 'number', ['number','number','number','number']);
+    , zRestore = Module.cwrap('z_restore', 'number', ['number','number','number','number'])
+    , printObject = Module.cwrap('z_print_obj', 'number', ['number'])
+    , readObject = Module.cwrap('read_object', 'number', ['number','number'])
+    , getObjectAddress = Module.cwrap('get_object_address', 'number', ['number']);
 
-  window['zPrintObj'] = Module.cwrap('z_print_obj', 'number', ['number']);
   window['zLoadVariable'] = Module.cwrap('load_variable', 'number', ['number']);
 
   // helper functions 
@@ -863,7 +872,7 @@
     }
 
     sortedWords.sort();
-    console.log(sortedWords);
+    //console.log(sortedWords);
   }
   function getAutocompleteList(p) {
     // get a list of all candidate words in the AC list
@@ -926,6 +935,20 @@
     if (out.reverse) t += '</span>';
     return t;
   }
+  function objectName(obj) {
+    // save output buffer
+    var t=out.text, b=out.buf, r;
+    out.buf='';
+    printObject(obj);
+    r=out.buf;
+    // restore output buffer
+    out.text=t; out.buf=b;
+    return r;
+  }
+  function parentObject(obj) {
+    var adr = getObjectAddress(obj);
+    return readObject(adr,ztypes.PARENT);
+  }
 
   // prepare global variable object
   window.globalvars = {};
@@ -935,6 +958,7 @@
     function update(w) {
       window['globalvars']['screen_cols'] = w;
       out.emptyLine = Array(w+1).join(" ")
+      console.log('set size to',w,'columns');
     }
     $(window).on('resize',function() {
       // update the screen_cols variable and z-machine register on resize
@@ -958,6 +982,16 @@
   if (window['globalvars']['h_type']>3) {
     // search for player object
     //"(self object)" "yourself"
+    // TODO find number of objects
+    var i, name;
+    for (i=0; i<200; ++i) {
+      name = objectName(i);
+      if (name=='(self obj)' || name=='yourself') {
+        console.log('found potential player',i);
+        playerObject=i;
+        break;
+      }
+    }
   }
   
   // call interpreter

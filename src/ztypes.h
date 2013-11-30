@@ -667,7 +667,9 @@ void z_jin( zword_t, zword_t );
 void z_clear_attr( zword_t, zword_t );
 void z_set_attr( zword_t, zword_t );
 void z_test_attr( zword_t, zword_t );
-
+#ifdef EMSCRIPTEN
+zword_t read_object( zword_t objp, int field );
+#endif
 
 /* operand.c */
 
