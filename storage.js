@@ -1,10 +1,19 @@
-function Storage() {
+function Storage(defaults) {
   var CLIENT_ID = '961409091716-f13l7n45n8u0uvkjqc9vjjddndd40jgs.apps.googleusercontent.com'
     , SCOPES = 'https://www.googleapis.com/auth/drive'
     , ls = window.localStorage || null
     , gAPICallback = 'googleAPILoaded'
-    , $dialog;
+    , $dialog, dsave = null;
   
+  // default options and option fill-in-from-defaults method
+  defaults = defaults || {};
+  function augment(a,b) {
+    for(k in b) {
+      if(b.hasOwnProperty(k) && !(k in a) { a[k] = b[k]; }
+    }
+  }
+  augment(defaults, { basename: 'file' });
+
   /* options
     
     { 
@@ -13,6 +22,7 @@ function Storage() {
       callback:  function(saved)   saved=true on success, saved=false on user abort
       error:     function(error)   called for save errors 
               || undefined         (just call callback(false))
+      basename: 
     }
   */
 
@@ -22,7 +32,9 @@ function Storage() {
     $dialog.appendTo('body').hide()
   }
 
-  function save( options ) {
+  function save(options) {
+    augment(options,defaults);
+    // condition dialog
   }
 
   function checkAuth() {
