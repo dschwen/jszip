@@ -22,19 +22,33 @@ function Storage(defaults) {
       callback:  function(saved)   saved=true on success, saved=false on user abort
       error:     function(error)   called for save errors 
               || undefined         (just call callback(false))
-      basename: 
+      basename: dialog title and default filename
+      extension: (list for open)
     }
   */
 
   function buildDialog() {
-    $dialog = $('<div class="storage-dialog"></div>')
-    
+    $dialog = $('<div class="storage-dialog"></div>');
+    $dialog.append($('<h1><span class="save-open"></span> <span class="title"></span>&hellip;</h1>'));
+
+    $('<button class="save-open"></button>').appendTo($dialog);
     $dialog.appendTo('body').hide()
   }
 
   function save(options) {
     augment(options,defaults);
     // condition dialog
+    $('.save-open',$dialog).text('Save');
+    $('.to-from',$dialog).text('to');
+    $('.title',$dialog).text(options.basename);
+  }
+
+  function open(options) {
+    augment(options,defaults);
+    // condition dialog
+    $('.save-open').text('Open');
+    $('.to-from',$dialog).text('from');
+    $('.title',$dialog).text(options.basename);
   }
 
   function fillDriveSelect() {
