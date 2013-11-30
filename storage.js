@@ -2,14 +2,14 @@ function Storage(defaults) {
   var CLIENT_ID = '961409091716-f13l7n45n8u0uvkjqc9vjjddndd40jgs.apps.googleusercontent.com'
     , SCOPES = 'https://www.googleapis.com/auth/drive'
     , ls = window.localStorage || null
-    , gAPICallback = 'googleAPILoaded'
+    , gAPICallback = 'storage_googleAPILoaded'
     , $dialog, dsave = null;
   
   // default options and option fill-in-from-defaults method
   defaults = defaults || {};
   function augment(a,b) {
-    for(k in b) {
-      if(b.hasOwnProperty(k) && !(k in a) { a[k] = b[k]; }
+    for (k in b) {
+      if (b.hasOwnProperty(k) && !(k in a)) { a[k] = b[k]; }
     }
   }
   augment(defaults, { basename: 'file' });
@@ -37,8 +37,8 @@ function Storage(defaults) {
     // condition dialog
   }
 
-  function checkAuth() {
-    gapi.auth.authorize( { 'client_id': CLIENT_ID, 'scope': SCOPES, 'immediate': true}, handleAuthResult);
+  function fillDriveSelect() {
+    $('<div></div>').text(JSON.stringify(dsave)).appendTo($('body'));
   }
 
   function handleAuthResult(authResult) {
@@ -76,7 +76,7 @@ function Storage(defaults) {
             }
           }
           fillDriveSelect('#savedriveoldname');
-          fillDriveSelect('#restoredriveoldname');
+          //fillDriveSelect('#restoredriveoldname');
         }
       });
     }
@@ -84,12 +84,21 @@ function Storage(defaults) {
     retrievePageOfFiles(initialRequest, []);
   }
   
+  $('body').append($('<div id="google_signin_button"></div>'));
+
   // load Google API
   if (!(gAPICallback in window)) {
     window[gAPICallback] = function(){
-      setTimeout(checkAuth, 1);
+      var options = {
+        'callback' : handleAuthResult,
+        'clientid' : CLIENT_ID,
+        'scope': SCOPES,
+        'cookiepolicy' : 'single_host_origin'
+      };
+
+      gapi.signin.render('google_signin_button', options);
     }
-    $('<script></script').appendTo('body').attr('src','https://apis.google.com/js/client.js?onload=googleAPILoaded');
+    $('<script></script').appendTo('body').attr('src','https://apis.google.com/js/client:platform.js?onload='+gAPICallback);
   }
 
   return {
@@ -98,6 +107,7 @@ function Storage(defaults) {
   };
 }
 
+/*
 <div class="dialog" id="savedialog">
   <h1>Save game&hellip;</h1>
   <div class="localsave">
@@ -352,3 +362,5 @@ function Storage(defaults) {
     };
     xhr.send();
   }
+
+*/
