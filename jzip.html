@@ -356,13 +356,11 @@
 
   var writeChar = window['jsWriteChar'] = function(c) {
     function flushBuffer() {
-      var $line = $('<div class="output"></div>').text(out.buf).insertBefore($('#inputline'));
-      if (out.reverse) $line.addClass('reverse');
-      if (out.bold) $line.addClass('bold');
-      if (out.emph) $line.addClass('emph');
-      if (out.fixed || /[^\s]\s\s/.test(out.buf)) $line.addClass('fixed');
-      scrollBottom();
       addToAutocomplete(out.buf);
+      out.buf += closeAttributes()
+      var $line = $('<div class="output"></div>').html(out.buf).insertBefore($('#inputline'));
+      scrollBottom();
+      out.buf = openAttributes()
     }
 
     if(String.fromCharCode(c)=='>') console.log('jsWriteChar',c,String.fromCharCode(c));
@@ -374,8 +372,8 @@
           flushBuffer();
         } else {
           out.rowspan[out.row-1].text(out.buf);
+          out.buf='';
         }
-        out.buf='';
       } else {
         out.buf += String.fromCharCode(c);
       }
@@ -385,7 +383,6 @@
         // output text
         if (c==13 || c==10 ) {
           flushBuffer();
-          out.buf='';
         } else {
           out.buf += String.fromCharCode(c);
         }
@@ -470,10 +467,12 @@
     } 
   }
   window['jsSetAttribute'] = function( normal,reverse, bold, emph, fixed ) {
+    out.buf += closeAttributes();
     out.reverse = ~~reverse;
     out.bold    = ~~bold;
     out.emph    = ~~emph;
     out.fixed   = ~~fixed;
+    out.buf += openAttributes();
     //console.log('jsSetAttribute',JSON.stringify(out));
   }
   window['jsRegisterLocation'] = function(id,name) {
@@ -909,6 +908,23 @@
     }
     $s.remove();
     return c;
+  }
+  function openAttributes() {
+    var t='';
+    if (out.reverse) t += '<span style="reverse">';
+    if (out.bold)    t += '<b>';
+    if (out.emph)    t += '<i>';
+    if (out.fixed)   t += '<tt>';
+    return t;
+  }
+  function closeAttributes() {
+    var t='';
+    // close in reverse order to produce valid html
+    if (out.fixed)   t += '</tt>';
+    if (out.emph)    t += '</i>';
+    if (out.bold)    t += '</b>';
+    if (out.reverse) t += '</span>';
+    return t;
   }
 
   // prepare global variable object
