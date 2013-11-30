@@ -2,10 +2,39 @@
 <head>
   <script src="http://code.jquery.com/jquery-1.10.1.min.js"></script>
   <script src="storage.js"></script>
+  <style>
+    .status {
+      white-space: pre;
+      font-family: monospace;
+      font-size: 12pt;
+    }
+  </style>
 </head>
 <body>
   <script>
-    s=Storage({});
+    //s=Storage({});
+
+    function testScreenWidth() {
+      var $s = $('<span class="status"></span>').css({ position: 'relative', top: '-1000px'}).appendTo($('body'))
+        , sw = $(window).width()
+        , i, j, t, a='WMx. l', w, c=null, wc;
+
+      for (i=0; i<a.length; ++i) {
+        t='';
+        for (j=0; j<100; ++j) { t+=a[i]; }
+        $s.text(t);
+        w = $s.width()/100.0;
+        wc = Math.floor(sw/w);
+        if( c!==null && c!==wc ) {
+          throw Error("No monospace fonta available");
+        } else {
+          c=wc;
+        }
+      }
+      return c;
+    }
+
+    $(window).on('resize',function() { console.log(testScreenWidth()) }) ; 
   </script>
 
   <div class="dialog" id="savedialog">
