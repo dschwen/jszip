@@ -449,6 +449,7 @@
     }
   }
   window['jsSplitWindow'] = function(lines) {
+    var cols = out.emptyLine.length;
     console.log('z_split_window',lines);
     $('body').css('padding-top',(lines+1)+'em');
     if (lines) {
@@ -456,10 +457,13 @@
       $('.statusrow',$statw).remove();
       out.rowspan=[];
       for (var i=0; i<lines; ++i) {
-        out.rowspan[i] = $('<span class="statusrow"></span>').css('top',i+'.5em').attr('id','row'+(i+1)).appendTo($statw);
+        // make sure length is exactly cols
         if (out.line[i]===undefined) {
           out.line[i]=out.emptyLine;
-        }
+        } 
+        out.line[i]=out.line[i].substr(0,cols) + out.emptyLine.substr(out.line[i].length);
+        // rebuild span
+        out.rowspan[i] = $('<span class="statusrow"></span>').css('top',i+'.5em').text(out.line[i]).attr('id','row'+(i+1)).appendTo($statw);
       }
     } else {
       $statw.hide();
