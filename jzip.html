@@ -110,7 +110,6 @@
     , $restore = $('#restoredialog')
     , $statw = $('#statuswindow')
     , $mapcontainer = $('#mapcontainer')
-    , srows = [], s_row=1, s_col=1
     , ls = window.localStorage || null
     , lsave = {}                        // copy of localStorage savegames
     , dsave = null                      // list of google drive savegames (null if not authenticated)
@@ -125,7 +124,18 @@
     , keyCallback = null
     , lineCallback = null
     , CLIENT_ID = '961409091716-f13l7n45n8u0uvkjqc9vjjddndd40jgs.apps.googleusercontent.com'
-    , SCOPES = 'https://www.googleapis.com/auth/drive';
+    , SCOPES = 'https://www.googleapis.com/auth/drive'
+    , ztypes = { 
+      H_SCREEN_ROWS: 32,
+      H_SCREEN_COLUMNS: 33,
+      H_SCREEN_LEFT: 34,
+      H_SCREEN_RIGHT: 35,
+      H_SCREEN_TOP: 36,
+      H_SCREEN_BOTTOM: 37,
+      H_MAX_CHAR_WIDTH: 38,
+      H_MAX_CHAR_HEIGHT: 39,
+      H_FILLER1: 40
+    };
 
 //  automap={"7":{"name":"Wendish's bedroom","n":73,"xy":[730,60]},"9":{"name":"driveway","xy":[340,380]},"12":{"name":"drawing room","w":124,"n":132,"xy":[450,570]},"13":{"name":"courtyard","s":132,"xy":[340,440]},"25":{"name":"Vivien's entrance","w":177,"xy":[290,240]},"31":{"name":"Ian's entrance","s":117,"xy":[290,0]},"32":{"name":"dining room","s":196},"33":{"name":"your bedroom","w":131,"e":70,"xy":[950,180]},"39":{"name":"east hall","e":159,"w":7,"xy":[840,60]},"67":{"name":"west hall","e":150,"w":117,"s":131,"se":131,"xy":[400,60]},"70":{"name":"your entrance","n":179,"s":25,"xy":[1060,180]},"73":{"name":"Wendish's entrance","e":179,"w":228,"xy":[730,0]},"88":{"name":"sitting room","n":196},"117":{"name":"Ian's bedroom","e":67,"n":31,"xy":[290,60]},"124":{"name":"new great hall","u":131,"e":12,"n":132,"w":196,"xy":[340,570]},"126":{"name":"Tamara's bedroom","n":222,"xy":[70,180]},"131":{"name":"gallery","w":148,"e":33,"d":124,"nw":67,"ne":39,"xy":[620,180]},"132":{"name":"foyer","s":124,"e":12,"n":13,"xy":[340,510]},"136":{"name":"old great hall","u":222,"xy":[10,570]},"148":{"name":"Vivien's bedroom","e":131,"xy":[290,180]},"150":{"name":"Hyde's bedroom","w":67,"xy":[510,60]},"151":{"name":"master bedroom","xy":[-40,120]},"159":{"name":"Iris's bedroom","w":39,"xy":[950,60]},"177":{"name":"Tamara's landing","e":25,"w":126,"xy":[180,240]},"179":{"name":"Iris's entrance","s":70,"n":73,"xy":[1060,60]},"196":{"name":"ground-floor corridor","n":32,"s":88,"w":246},"222":{"name":"first-floor corridor","n":136,"w":151,"xy":[70,120]},"224":{"name":"Hyde's entrance","s":150,"xy":[510,0]},"228":{"name":"midpoint","w":224,"xy":[620,0]},"246":{"name":"junction","w":136}};
 
@@ -335,26 +345,57 @@
   $('.filerestore button',$restore).click(function(){restoreFile($('#uploadfile')[0].files)});
 
   // functions to be called from the c code
-  var out = window['output']={ buf:'', text: true, reverse: false, bold: false, emph: false, fixed: false }
-    , argstore = window['argstore']={};
+  var out = window['output'] = { 
+      buf:'', 
+      col:0, row: 0,
+      rowspan: [], line: [], 
+      emptyLine: '', 
+      text: true, 
+      reverse: false, bold: false, emph: false, fixed: false 
+    }, argstore = window['argstore']={};
 
   var writeChar = window['jsWriteChar'] = function(c) {
+    function flushBuffer() {
+      var $line = $('<div class="output"></div>').text(out.buf).insertBefore($('#inputline'));
+      if (out.reverse) $line.addClass('reverse');
+      if (out.bold) $line.addClass('bold');
+      if (out.emph) $line.addClass('emph');
+      if (out.fixed || /[^\s]\s\s/.test(out.buf)) $line.addClass('fixed');
+      scrollBottom();
+      addToAutocomplete(out.buf);
+    }
+
     if(String.fromCharCode(c)=='>') console.log('jsWriteChar',c,String.fromCharCode(c));
-    if (c==13 || c==10 ) {
-      if (out.text) {
-        var $line = $('<div class="output"></div>').text(out.buf).insertBefore($('#inputline'));
-        if (out.reverse) $line.addClass('reverse');
-        if (out.bold) $line.addClass('bold');
-        if (out.emph) $line.addClass('emph');
-        if (out.fixed || /[^\s]\s\s/.test(out.buf)) $line.addClass('fixed');
-        scrollBottom();
-        addToAutocomplete(out.buf);
+
+    if (window['globalvars']['h_type']<=3) {
+      // Z3 and below
+      if (c==13 || c==10 ) {
+        if (out.text) {
+          flushBuffer();
+        } else {
+          out.rowspan[out.row-1].text(out.buf);
+        }
+        out.buf='';
       } else {
-        srows[s_row-1].text(out.buf);
+        out.buf += String.fromCharCode(c);
       }
-      out.buf='';
     } else {
-      out.buf += String.fromCharCode(c);
+      // higher versions (Z5, Z8 etc.)
+      if (out.text) {
+        // output text
+        if (c==13 || c==10 ) {
+          flushBuffer();
+          out.buf='';
+        } else {
+          out.buf += String.fromCharCode(c);
+        }
+      } else {
+        // update status line
+        var l = out.line[out.row-1], i = out.col-1;
+        out.line[out.row-1] = out.line[out.row-1].substr(0,i) + String.fromCharCode(c) + out.line[out.row-1].substr(i+1);
+        out.rowspan[out.row-1].text(out.line[out.row-1]);
+        out.col++;
+      }
     }
   }
   window['jsPrintString'] = function(s) {
@@ -403,18 +444,22 @@
   window['jsMoveCursor'] = function(row,col) {
     console.log("z_set_cursor",out.text,row,col,out.buf);
     if (!out.text) {
-      s_row=row;
-      s_col=col;
+      out.row=row;
+      out.col=col;
     }
   }
   window['jsSplitWindow'] = function(lines) {
+    console.log('z_split_window',lines);
     $('body').css('padding-top',(lines+1)+'em');
     if (lines) {
       $statw.show().css('height',lines+'em');
-      $('.row',$statw).remove();
-      srows=[];
+      $('.statusrow',$statw).remove();
+      out.rowspan=[];
       for (var i=0; i<lines; ++i) {
-        srows[i] = $('<span class="row"></span>').css('top',i+'.5em').attr('id','row'+(i+1)).appendTo($statw);
+        out.rowspan[i] = $('<span class="statusrow"></span>').css('top',i+'.5em').attr('id','row'+(i+1)).appendTo($statw);
+        if (out.line[i]===undefined) {
+          out.line[i]=out.emptyLine;
+        }
       }
     } else {
       $statw.hide();
@@ -563,6 +608,7 @@
     , interpret = Module.cwrap('interpret', 'number')
     , jsrGetLine = Module.cwrap('jsrGetLine', 'number', ['number','number','number','number','number','number'])
     , jsrInputCharacter = Module.cwrap('jsrInputCharacter', 'number', ['number','number'])
+    , jsrResizeWindow = Module.cwrap('jsrResizeWindow', 'number', ['number'])
     , zRestore = Module.cwrap('z_restore', 'number', ['number','number','number','number']);
 
   window['zPrintObj'] = Module.cwrap('z_print_obj', 'number', ['number']);
@@ -841,10 +887,45 @@
     if (/^sw$|^southwest$|^go southwest$/.test(v)) return 'sw';
     return null;
   }
+  function testScreenWidth() {
+    var $s = $('<span class="statusrow"></span>').css({ position: 'relative', top: '-1000px'}).appendTo($('body'))
+      , sw = $(window).width()
+      , i, j, t, a='WMx. l', w, c=null, wc;
+
+    for (i=0; i<a.length; ++i) {
+      t='';
+      for (j=0; j<100; ++j) { t+=a[i]; }
+      $s.text(t);
+      w = $s.width()/100.0;
+      wc = Math.floor(sw/w);
+      // we test a few characters. they should all have the _same_ width. Just in case something weird goes on, take the smallest char number that fits.
+      if( c===null || c>wc ) {
+        c=wc;
+      }
+    }
+    $s.remove();
+    return c;
+  }
 
   // prepare global variable object
   window.globalvars = {};
 
+  function setupScreen() {
+    var w = testScreenWidth();
+    function update(w) {
+      window['globalvars']['screen_cols'] = w;
+      out.emptyLine = Array(w+1).join(" ")
+    }
+    $(window).on('resize',function() {
+      // update the screen_cols variable and z-machine register on resize
+      w = testScreenWidth();
+      jsrResizeWindow(w);
+      update(w);
+    });
+    update(w);
+  };
+  setupScreen();
+  
   // Start z-machine
   //spinupJS('catseye.z3');
   //spinupJS('moonmist.z3');
@@ -852,13 +933,13 @@
   spinupJS('curses.z5');
 
   // at this point the globalvars object is populated
-  /*
-  if (h_version>3) {
+  
+  // automapping for >Z3 games is challenging
+  if (window['globalvars']['h_type']>3) {
     // search for player object
-    "(self object)" "yourself"
+    //"(self object)" "yourself"
   }
-  */
-
+  
   // call interpreter
   function step() {
     try {

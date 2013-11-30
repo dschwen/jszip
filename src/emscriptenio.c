@@ -33,9 +33,7 @@
 /* *JWK* Right margin forced to 1 only where needed */
 
 /* *JWK* 2000-02-29 */
-#ifdef EMSCRIPTEN
 #include <emscripten.h>
-#endif
 
 #include "ztypes.h"
 
@@ -137,6 +135,11 @@ void outc( int c )
    putchar( c );
 }                               /* outc */
 
+void jsrResizeWindow(int width) {
+  screen_cols = width;
+  set_byte( H_SCREEN_COLUMNS, screen_cols );
+}
+
 void initialize_screen(  )
 {
    int row, col;
@@ -167,7 +170,8 @@ void initialize_screen(  )
       right_margin = 1;         /* *JWK* */
 
    //if ( screen_cols == 0 && ( screen_cols = tgetnum( "co" ) ) == -1 )
-      screen_cols = DEFAULT_COLS;
+   //   screen_cols = DEFAULT_COLS;
+   asm("window['globalvars']['screen_cols']" : "=r"(screen_cols):);
 
    //if ( screen_rows == 0 && ( screen_rows = tgetnum( "li" ) ) == -1 )
       screen_rows = DEFAULT_ROWS;

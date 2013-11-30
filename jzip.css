@@ -152,10 +152,12 @@ button.signin {
   display: none;
 }
 
-#statuswindow>span.row {
+span.statusrow {
   position: absolute;
   padding-left: 1em;
   left:0;
+  font-family: monospace;
+  white-space: pre;
 }
 
 .dialog {
