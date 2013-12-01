@@ -9,113 +9,60 @@
       font-size: 12pt;
     }
   </style>
+  <link href="storage.css" rel="stylesheet" type="text/css">
 </head>
 <body>
-  <script>
-    //s=Storage({});
 
-    function testScreenWidth() {
-      var $s = $('<span class="status"></span>').css({ position: 'relative', top: '-1000px'}).appendTo($('body'))
-        , sw = $(window).width()
-        , i, j, t, a='WMx. l', w, c=null, wc;
-
-      for (i=0; i<a.length; ++i) {
-        t='';
-        for (j=0; j<100; ++j) { t+=a[i]; }
-        $s.text(t);
-        w = $s.width()/100.0;
-        wc = Math.floor(sw/w);
-        if( c!==null && c!==wc ) {
-          throw Error("No monospace fonta available");
-        } else {
-          c=wc;
-        }
-      }
-      return c;
-    }
-
-    $(window).on('resize',function() { console.log(testScreenWidth()) }) ; 
-  </script>
-
-  <div class="dialog" id="savedialog">
-    <h1>Save game&hellip;</h1>
-    <div class="localsave">
-      <h2>&hellip;on this browser</h2>
-      <div class="option">
-        <input type="radio" name="savetype" value="localnew" checked/>
-        <input type="text" id="savelocalnewname" placeholder="New File"/>
-        <br/>
-        <div class="haslocal">
-        <input type="radio" name="savetype" value="localold"/>
-        <select id="savelocaloldname">
-        <option>Loading...</option>
-        </select>
-        </div>
-        <br/>
-        <button>Save</button>
+  <div class="dialog" id="storagedialog">
+    <h1 class="save">Save <span class="file"></span> &hellip;</h1>
+    <h1 class="open">Restore <span class="file"></span> &hellip;</h1>
+    <div class="local option">
+      <h2 class="save">&hellip;on this browser</h2>
+      <h2 class="open">&hellip;from this browser</h2>
+      <input class="save" type="text" id="localnewname" placeholder="New File"/>
+      <div class="haslocal">
+      <select id="localoldname">
+      </select>
       </div>
+      <button>
+        <span class="save">Save</span>
+        <span class="open">Restore</span>
+      </button>
     </div>
-    <div class="filesave">
-      <h2>&hellip;on this computer</h2>
-      <div class="option">
-        <a download="save.sav" id="downloadsave" href="">Download save file&hellip;</a>
+    <div class="file option">
+      <h2 class="save">&hellip;on this computer</h2>
+      <h2 class="open">&hellip;from this computer</h2>
+      <div class="save">
+        <a download="save.sav" id="download" href="">Download save file&hellip;</a>
       </div>
-    </div>
-    <div class="drivesave">
-      <h2>&hellip;on Google Drive</h2>
-      <div class="option drive">
-        <input type="radio" name="savetype" value="drivenew" checked/>
-        <input type="text" id="savedrivenewname" placeholder="New File"/>
-        <br/>
-        <div class="hasdrive">
-        <input type="radio" name="savetype" value="driveold"/>
-        <select id="savedriveoldname">
-        <option>Loading...</option>
-        </select>
-        </div>
-        <br/>
-        <button>Save</button>
-      </div>
-      <div class="option auth">
-        <button class="signin">Sign in with Google</button>
-      </div>
-    </div>
-  </div>
-
-  <div class="dialog" id="restoredialog">
-    <h1>Restore game&hellip;</h1>
-    <div class="localrestore haslocal">
-      <h2>&hellip;from this browser</h2>
-      <div class="option">
-        <select id="restorelocaloldname">
-        <option>Loading...</option>
-        </select>
-        <br/>
-        <button>Restore</button>
-      </div>
-    </div>
-    <div class="filerestore">
-      <h2>&hellip;from this computer</h2>
-      <div class="option">
+      <div class="open">
         <input type="file" id="uploadfile"/>
-        <br/>
-        <button>Restore</button>
+        <button>
+          <span class="save">Save</span>
+          <span class="open">Restore</span>
+        </button>
       </div>
     </div>
-    <div class="driverestore hasdrive">
-      <h2>&hellip;from Google Drive</h2>
-      <div class="option drive">
-        <select id="restoredriveoldname">
-        <option>Loading...</option>
+    <div class="drive option">
+      <h2 class="save">&hellip;on Google Drive</h2>
+      <h2 class="open">&hellip;from Google Drive</h2>
+      <div class="signedin">
+        <input class="save" type="text" id="drivenewname" placeholder="New File"/>
+        <select id="driveoldname">
         </select>
-        <button>Restore</button>
+        <button>
+          <span class="save">Save</span>
+          <span class="open">Restore</span>
+        </button>
       </div>
-      <div class="option auth">
-        <button class="signin">Sign in with Google</button>
+      <div class="signedout">
       </div>
     </div>
   </div>
 
+  <script>
+    s=Storage({});
+  </script>
 </body>
 </html>
 

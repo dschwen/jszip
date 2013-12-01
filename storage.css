@@ -1,0 +1,39 @@
+.dialog {
+  position: fixed;
+  top: 1em;
+  border: 1px solid black;
+  box-shadow: 3px 3px 15px rgba(0,0,0,0.3);
+  padding: 0.5em;
+  background-color: white;
+}
+.dialog>h1 {
+  font-size:15pt;
+  margin: 0;
+}
+.dialog>div>h2 {
+  font-size:13pt;
+  margin: 0.5em 0 0 -1.5em;
+  clear: both
+}
+.option {
+  position: relative;
+  padding: 0.5em 0.5em 2em 2em;
+  margin-bottom: 0.5em;
+  min-height: 2em;
+  clear: both;
+  border: 1px solid gray;
+  background-color: #eee;
+}
+.option:hover {
+  background-color: #ddd;
+}
+.option>button {
+  position: absolute;
+  right: 0.5em;
+  bottom: 0.5em;
+}
+.signedin { display: none; }
+.signedout { 
+  text-align: center; 
+  padding: 1em 0 0 0;
+}

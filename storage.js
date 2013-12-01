@@ -3,11 +3,12 @@ function Storage(defaults) {
     , SCOPES = 'https://www.googleapis.com/auth/drive'
     , ls = window.localStorage || null
     , gAPICallback = 'storage_googleAPILoaded'
-    , $dialog, dsave = null;
+    , $dialog=$('#storagedialog'), dsave = null;
   
   // default options and option fill-in-from-defaults method
   defaults = defaults || {};
   function augment(a,b) {
+    a=a||{};
     for (k in b) {
       if (b.hasOwnProperty(k) && !(k in a)) { a[k] = b[k]; }
     }
@@ -17,9 +18,10 @@ function Storage(defaults) {
   /* options
     
     { 
+      binary: true,
       local: 'keyname',
       server: [ list of server URLs for open only ],
-      callback:  function(saved)   saved=true on success, saved=false on user abort
+      callback:  function(file)   file=data or true on success, file===false on user abort
       error:     function(error)   called for save errors 
               || undefined         (just call callback(false))
       basename: dialog title and default filename
@@ -27,28 +29,20 @@ function Storage(defaults) {
     }
   */
 
-  function buildDialog() {
-    $dialog = $('<div class="storage-dialog"></div>');
-    $dialog.append($('<h1><span class="save-open"></span> <span class="title"></span>&hellip;</h1>'));
-
-    $('<button class="save-open"></button>').appendTo($dialog);
-    $dialog.appendTo('body').hide()
-  }
-
   function save(options) {
     augment(options,defaults);
     // condition dialog
-    $('.save-open',$dialog).text('Save');
-    $('.to-from',$dialog).text('to');
-    $('.title',$dialog).text(options.basename);
+    $('.open',$dialog).hide(); 
+    $('.save',$dialog).show(); 
+    $('.file',$dialog).text(options.basename);
   }
 
   function open(options) {
     augment(options,defaults);
     // condition dialog
-    $('.save-open').text('Open');
-    $('.to-from',$dialog).text('from');
-    $('.title',$dialog).text(options.basename);
+    $('.open',$dialog).show(); 
+    $('.save',$dialog).hide()
+    $('.file',$dialog).text(options.basename);
   }
 
   function fillDriveSelect() {
@@ -58,8 +52,8 @@ function Storage(defaults) {
   function handleAuthResult(authResult) {
     if (authResult && !authResult.error) {
       // Access token has been successfully retrieved, requests can be sent to the API.
-      $('.option.drive',$dialog).show();
-      $('.option.auth',$dialog).hide();
+      $('.option.signedin',$dialog).show();
+      $('.option.signedout',$dialog).hide();
       // fetch list of files
       gapi.client.load('drive', 'v2', function() {
         console.log("Google Drive API loaded.");
@@ -96,116 +90,6 @@ function Storage(defaults) {
     }
     var initialRequest = gapi.client.drive.files.list();
     retrievePageOfFiles(initialRequest, []);
-  }
-  
-  $('body').append($('<div id="google_signin_button"></div>'));
-
-  // load Google API
-  if (!(gAPICallback in window)) {
-    window[gAPICallback] = function(){
-      var options = {
-        'callback' : handleAuthResult,
-        'clientid' : CLIENT_ID,
-        'scope': SCOPES,
-        'cookiepolicy' : 'single_host_origin'
-      };
-
-      gapi.signin.render('google_signin_button', options);
-    }
-    $('<script></script').appendTo('body').attr('src','https://apis.google.com/js/client:platform.js?onload='+gAPICallback);
-  }
-
-  return {
-    save: save,
-    open: open
-  };
-}
-
-/*
-<div class="dialog" id="savedialog">
-  <h1>Save game&hellip;</h1>
-  <div class="localsave">
-    <h2>&hellip;on this browser</h2>
-    <div class="option">
-      <input type="radio" name="savetype" value="localnew" checked/>
-      <input type="text" id="savelocalnewname" placeholder="New File"/>
-      <br/>
-      <div class="haslocal">
-      <input type="radio" name="savetype" value="localold"/>
-      <select id="savelocaloldname">
-      <option>Loading...</option>
-      </select>
-      </div>
-      <br/>
-      <button>Save</button>
-    </div>
-  </div>
-  <div class="filesave">
-    <h2>&hellip;on this computer</h2>
-    <div class="option">
-      <a download="save.sav" id="downloadsave" href="">Download save file&hellip;</a>
-    </div>
-  </div>
-  <div class="drivesave">
-    <h2>&hellip;on Google Drive</h2>
-    <div class="option drive">
-      <input type="radio" name="savetype" value="drivenew" checked/>
-      <input type="text" id="savedrivenewname" placeholder="New File"/>
-      <br/>
-      <div class="hasdrive">
-      <input type="radio" name="savetype" value="driveold"/>
-      <select id="savedriveoldname">
-      <option>Loading...</option>
-      </select>
-      </div>
-      <br/>
-      <button>Save</button>
-    </div>
-    <div class="option auth">
-      <button class="signin">Sign in with Google</button>
-    </div>
-  </div>
-</div>
-
-<div class="dialog" id="restoredialog">
-  <h1>Restore game&hellip;</h1>
-  <div class="localrestore haslocal">
-    <h2>&hellip;from this browser</h2>
-    <div class="option">
-      <select id="restorelocaloldname">
-      <option>Loading...</option>
-      </select>
-      <br/>
-      <button>Restore</button>
-    </div>
-  </div>
-  <div class="filerestore">
-    <h2>&hellip;from this computer</h2>
-    <div class="option">
-      <input type="file" id="uploadfile"/>
-      <br/>
-      <button>Restore</button>
-    </div>
-  </div>
-  <div class="driverestore hasdrive">
-    <h2>&hellip;from Google Drive</h2>
-    <div class="option drive">
-      <select id="restoredriveoldname">
-      <option>Loading...</option>
-      </select>
-      <button>Restore</button>
-    </div>
-    <div class="option auth">
-      <button class="signin">Sign in with Google</button>
-    </div>
-  </div>
-</div>
-
-  // get saves from localStorage
-  if (ls) {
-    lsave = JSON.parse(ls.getItem('jszipSaves')||'{}');
-  } else {
-    $('.localsave').hide();
   }
 
   function fillFileSelect(s) {
@@ -376,5 +260,39 @@ function Storage(defaults) {
     };
     xhr.send();
   }
+  
+  $('.signedout',$dialog).append($('<div id="google_signin_button"></div>'));
+  $('.open',$dialog).hide();
+
+  // load Google API
+  if (!(gAPICallback in window)) {
+    window[gAPICallback] = function(){
+      var options = {
+        'callback' : handleAuthResult,
+        'clientid' : CLIENT_ID,
+        'scope': SCOPES,
+        'cookiepolicy' : 'single_host_origin'
+      };
+
+      gapi.signin.render('google_signin_button', options);
+    }
+    $('<script></script').appendTo('body').attr('src','https://apis.google.com/js/client:platform.js?onload='+gAPICallback);
+  }
+
+  return {
+    save: save,
+    open: open
+  };
+}
+
+/*
+
+  // get saves from localStorage
+  if (ls) {
+    lsave = JSON.parse(ls.getItem('jszipSaves')||'{}');
+  } else {
+    $('.localsave').hide();
+  }
+
 
 */
