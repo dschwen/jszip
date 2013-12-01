@@ -481,7 +481,7 @@
   //   input prompt. The id is the parent object of the player. The player object
   //   is guessed below
   var registerLocation = window['jsRegisterLocation'] = function(id,name) {
-    console.log('register location:',id,name);
+    //console.log('register location:',id,name, lastRoom,lastDirection);
     var update=false
       , name = name || out.buf;
 
@@ -528,7 +528,7 @@
     }
 
     // display input line
-    $('#inputline').show();
+    $('#inputline').val('').show();
     if(focusInput) $input.focus();
     scrollBottom();
     out.buf='';
@@ -891,7 +891,7 @@
   }
   function parseDirection(command) {
     // try to parse user input to store the last geiven direction of movement
-    var v=command.toLowerCase();
+    var v=command.toLowerCase().replace(/^\s+/,'').replace(/\s+$/,'');
     if (/^n$|^north$|^go north$/.test(v)) return 'n';
     if (/^e$|^east$|^go east$/.test(v)) return 'e';
     if (/^s$|^south$|^go south$/.test(v)) return 's';

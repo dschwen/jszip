@@ -104,7 +104,7 @@ function Map($container) {
   // Room class
   function Room(id,x,y) {
     var auto = automap[id];
-console.log(auto.name,x,y);
+//console.log(auto.name,x,y);
     // save current placemnet on map
 
     // place room on map
