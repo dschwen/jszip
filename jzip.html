@@ -475,6 +475,11 @@
     out.buf += openAttributes();
     //console.log('jsSetAttribute',JSON.stringify(out));
   }
+
+  // * For Z3 games this is called when drawing the fixed format status line
+  // * For Z5 and above games this is called as soon at the game returns to the 
+  //   input prompt. The id is the parent object of the player. The player object
+  //   is guessed below
   var registerLocation = window['jsRegisterLocation'] = function(id,name) {
     console.log('register location:',id,name);
     var update=false
@@ -916,7 +921,7 @@
       }
     }
     $s.remove();
-    return c;
+    return c-2; // -2 to account for padding
   }
   function openAttributes() {
     var t='';
@@ -953,12 +958,23 @@
   // prepare global variable object
   window.globalvars = {};
 
+  // Start z-machine
+  //spinupJS('catseye.z3');
+  //spinupJS('moonmist.z3');
+  //spinupJS('zork2.z3');
+  spinupJS('curses.z5');
+
+  // set the screen witdth in monospace characters (and update on resize)
   function setupScreen() {
     var w = testScreenWidth();
     function update(w) {
+      // set variable and line template
       window['globalvars']['screen_cols'] = w;
       out.emptyLine = Array(w+1).join(" ")
-      console.log('set size to',w,'columns');
+      // clear status buffer
+      for (var i=0; i<out.line.length; ++i) {
+        out.line[i]=out.emptyLine;
+      }
     }
     $(window).on('resize',function() {
       // update the screen_cols variable and z-machine register on resize
@@ -970,12 +986,6 @@
   };
   setupScreen();
   
-  // Start z-machine
-  //spinupJS('catseye.z3');
-  //spinupJS('moonmist.z3');
-  //spinupJS('zork2.z3');
-  spinupJS('curses.z5');
-
   // at this point the globalvars object is populated
   
   // automapping for >Z3 games is challenging

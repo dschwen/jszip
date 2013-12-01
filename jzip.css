@@ -111,7 +111,7 @@ div.echo {
   background-color: white;
   cursor: pointer;
 }
-div.output, #inputline, #inputline>input, #statuswindow {
+div.output, #inputline, #inputline>input, #statuswindow, span.statusrow {
   font-family: serif;
   font-size: 12pt;
 }
