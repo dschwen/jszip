@@ -25,7 +25,8 @@ Try it live on [http://frost.schwen.de](http://frost.schwen.de)
 Screenshot
 ----------
 
-![Moonmist on jzip.js](http://i.imgur.com/TAdcFt7.png)
+![Graham Nelson's "Curses" on jzip.js](http://i.imgur.com/zm1tzW4.png)
+The screenshot shows automapping support in the Z-Machine V5 game "Curses" by Graham Nelson. Also note the correct display of the free form status bar.
 
 Bugs
 ----
