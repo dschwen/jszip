@@ -28,8 +28,43 @@ Screenshot
 ![Graham Nelson's "Curses" on jzip.js](http://i.imgur.com/zm1tzW4.png)
 The screenshot shows automapping support in the Z-Machine V5 game "Curses" by Graham Nelson. Also note the correct display of the free form status bar.
 
-Bugs
+Help
 ----
 
-Currently only z3 games are supported due to the lack of fixed font terminal emulation. Games beyond z3 position
-the cursor absolutely to draw their own status lines.
+### Automapping
+
+The automapping algorithm in jzip.js has two components:
+* Identifying the last movement command
+* Identifying the current room
+
+The movement commands are parsed by jzip.js before the command line is passed on to the Z-Machine interpreter. Jzip.js 
+understands the compass directions in abbreviated (n,e,s,w,ne,nw,se,sw and u,d) and unabbreviated form,
+as well as the unabbreviated forms prefixed with ```go``` command. When the command line does not have input focus, the user 
+can navigate with single keypresses of n,e,s,w,u,d or the numerical keypad (which also allows diagonal movements).
+
+In V3 and below games obtaining the current location is straight forward; it is stored in the global Z-Machine variable 0.
+
+In higher version games the current location is determined by inspecting the parent object of teh player object. Determining the 
+player object is currently done with a simple heuristic, by looking for an object with the name of ```(self object)``` or ```yourself```.
+
+
+### Autocomplete
+
+Jzip.js creates a dictionary of completable words form the game text that was printed during the last five game turns. Press the tab key to
+complete the currently tyoped word. Press the tab key repeatedly to cycle through all possible completions. Press space, enter, or cursor left/right keys
+to accept the suggested completion or continue typing to cancel completion.
+
+Cursor up/down keys cycle through teh command line history
+
+### The Map
+
+Click on the gray bar at the right edge of the screen to expand the map view. The map can be panned by dragging the background with the mouse.
+Rooms can be rearranged by dragging them around on the map. Hovering a room with the mous will highlight all rooms that have been accessed from the room.
+The current location in the game is highlighted with a red aura. 
+
+### Saving and Restoring game states
+
+The current state of teh game can be save using the ```save``` command, and a previously saved game can be restored with the ```restore``` command.
+In either case a dialog with save/restore options will pop up. The games are saved in the standard save game format Quetzal, which many Z-Machine
+interpreters can read and write.
+
