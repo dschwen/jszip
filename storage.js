@@ -13,7 +13,7 @@ function Storage(defaults) {
       if (b.hasOwnProperty(k) && !(k in a)) { a[k] = b[k]; }
     }
   }
-  augment(defaults, { basename: 'file' });
+  augment(defaults, { basename: 'file', binary: true });
 
   /* options
     
@@ -26,15 +26,47 @@ function Storage(defaults) {
               || undefined         (just call callback(false))
       basename: dialog title and default filename
       extension: (list for open)
+      data: file data for saving
     }
   */
+  function common(options) {
+    // insert the basename in the dialog text
+    $('.basename',$dialog).text(options.basename);
+
+    // unbild all event handlers on buttons and links
+    $('button .downloadlink',$dialog).off('click');
+
+    // local files
+    if (ls===null || !('local' in options)) {
+      $('.local',$dialog).hide();
+    } else {
+      $('.local',$dialog).show();
+    }
+
+    // server
+    if (!('server' in options)) {
+      $('.server',$dialog).hide();
+    } else {
+      $('.server',$dialog).show();
+    }
+  }
 
   function save(options) {
     augment(options,defaults);
     // condition dialog
+    common(options);
     $('.open',$dialog).hide(); 
     $('.save',$dialog).show(); 
-    $('.file',$dialog).text(options.basename);
+  
+    // prepare downloadlink
+    $('.downloadlink',$dialog).on('click', function() {
+      var a = window.btoa(options.data)
+      $(this).attr('href','data:application/octet-stream;base64,'+a);
+    });
+
+    // button for local save
+    $('.local button',$dialog).on('click',function() {
+    });
   }
 
   function open(options) {
@@ -52,8 +84,8 @@ function Storage(defaults) {
   function handleAuthResult(authResult) {
     if (authResult && !authResult.error) {
       // Access token has been successfully retrieved, requests can be sent to the API.
-      $('.option.signedin',$dialog).show();
-      $('.option.signedout',$dialog).hide();
+      $('.signedin',$dialog).show();
+      $('.signedout',$dialog).hide();
       // fetch list of files
       gapi.client.load('drive', 'v2', function() {
         console.log("Google Drive API loaded.");

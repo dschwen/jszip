@@ -14,15 +14,15 @@
 <body>
 
   <div class="dialog" id="storagedialog">
-    <h1 class="save">Save <span class="file"></span> &hellip;</h1>
-    <h1 class="open">Restore <span class="file"></span> &hellip;</h1>
+    <h1 class="save">Save <span class="basename"></span>&hellip;</h1>
+    <h1 class="open">Restore <span class="basename"></span>&hellip;</h1>
     <div class="local option">
       <h2 class="save">&hellip;on this browser</h2>
       <h2 class="open">&hellip;from this browser</h2>
       <input class="save" type="text" id="localnewname" placeholder="New File"/>
-      <div class="haslocal">
-      <select id="localoldname">
-      </select>
+      <div class="hasfiles">
+        <select id="localoldname">
+        </select>
       </div>
       <button>
         <span class="save">Save</span>
@@ -33,7 +33,7 @@
       <h2 class="save">&hellip;on this computer</h2>
       <h2 class="open">&hellip;from this computer</h2>
       <div class="save">
-        <a download="save.sav" id="download" href="">Download save file&hellip;</a>
+        <a download="save.sav" class="downloadlink" href="">Download <span class="basename"></span>&hellip;</a>
       </div>
       <div class="open">
         <input type="file" id="uploadfile"/>
@@ -48,7 +48,22 @@
       <h2 class="open">&hellip;from Google Drive</h2>
       <div class="signedin">
         <input class="save" type="text" id="drivenewname" placeholder="New File"/>
-        <select id="driveoldname">
+        <div class="hasfiles">
+          <select id="driveoldname">
+          </select>
+        </div>
+        <button>
+          <span class="save">Save</span>
+          <span class="open">Restore</span>
+        </button>
+      </div>
+      <div class="signedout">
+      </div>
+    </div>
+    <div class="server option open">
+      <h2 class="open">&hellip;from server.</h2>
+      <div class="signedin">
+        <select id="serveroldname">
         </select>
         <button>
           <span class="save">Save</span>

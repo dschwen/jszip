@@ -15,7 +15,7 @@
   margin: 0.5em 0 0 -1.5em;
   clear: both
 }
-.option {
+.dialog .option {
   position: relative;
   padding: 0.5em 0.5em 2em 2em;
   margin-bottom: 0.5em;
@@ -24,16 +24,19 @@
   border: 1px solid gray;
   background-color: #eee;
 }
-.option:hover {
+.dialog .option:hover {
   background-color: #ddd;
 }
-.option>button {
+.dialog .option button {
   position: absolute;
   right: 0.5em;
   bottom: 0.5em;
 }
-.signedin { display: none; }
-.signedout { 
+.dialog .signedin { display: none; }
+.dialog .signedout { 
   text-align: center; 
   padding: 1em 0 0 0;
+}
+.dialog input.selected, .dialog select.selected {
+  border: 2px solid blue;
 }
