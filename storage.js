@@ -1,9 +1,9 @@
-function Storage(defaults) {
+function Storage(template,defaults) {
   var CLIENT_ID = '961409091716-f13l7n45n8u0uvkjqc9vjjddndd40jgs.apps.googleusercontent.com'
     , SCOPES = 'https://www.googleapis.com/auth/drive'
     , ls = window.localStorage || null
     , gAPICallback = 'storage_googleAPILoaded'
-    , $dialog=$('#storagedialog'), dsave = null;
+    , $dialog, dsave = null;
   
   // default options and option fill-in-from-defaults method
   defaults = defaults || {};
@@ -21,6 +21,8 @@ function Storage(defaults) {
     drive: null,
     server: null
   }
+
+  $dialog = template.clone();
 
   // hook up buttons
   $('.local button',$dialog).on('click', function() { if(handler.local) handler.local() });
@@ -58,6 +60,12 @@ function Storage(defaults) {
       $('.server',$dialog).hide();
     } else {
       $('.server',$dialog).show();
+    }
+
+    // actualCallback
+    options.actualCallback = function() {
+      $dialog.fadeOut();
+      if (options.callback) options.callback();
     }
   }
 
