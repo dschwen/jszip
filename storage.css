@@ -37,6 +37,3 @@
   text-align: center; 
   padding: 1em 0 0 0;
 }
-.dialog input.selected, .dialog select.selected {
-  border: 2px solid blue;
-}

@@ -15,6 +15,19 @@ function Storage(defaults) {
   }
   augment(defaults, { basename: 'file', binary: true });
 
+  var handler = {
+    local: null,
+    file: null,
+    drive: null,
+    server: null
+  }
+
+  // hook up buttons
+  $('.local button',$dialog).on('click', function() { if(handler.local) handler.local() });
+  $('.file button',$dialog).on('click', function() { if(handler.file) handler.file() });
+  $('.drive button',$dialog).on('click', function() { if(handler.drive) handler.drive() });
+  $('.server button',$dialog).on('click', function() { if(handler.server) handler.server() });
+
   /* options
     
     { 
@@ -32,9 +45,6 @@ function Storage(defaults) {
   function common(options) {
     // insert the basename in the dialog text
     $('.basename',$dialog).text(options.basename);
-
-    // unbild all event handlers on buttons and links
-    $('button .downloadlink',$dialog).off('click');
 
     // local files
     if (ls===null || !('local' in options)) {
@@ -124,8 +134,8 @@ function Storage(defaults) {
     retrievePageOfFiles(initialRequest, []);
   }
 
-  function fillFileSelect(s) {
-    var g,$s=$(s),n=true;
+  function fillFileSelect() {
+    var g,$s=$('.file optgroup',$dialog),n=true;
     $s.empty();
     for (g in lsave) {
       if (lsave.hasOwnProperty(g)) {
@@ -133,22 +143,32 @@ function Storage(defaults) {
         n=false;
       }
     }
-    if (n) { $('.haslocal').hide() }
-    else   { $('.haslocal').show() }
+
+    if (nofiles) {
+      $('.file .hasfiles',$dialog).hide() 
+    } else { 
+      $('.file .hasfiles',$dialog).show() 
+    }
   }
-  function fillDriveSelect(s) {
+  function fillDriveSelect() {
     if (dsave===null) { return; }
 
-    var g,$s=$(s),n=true;
+    var g,$s=$('.drive optgroup',$dialog),nofiles=true;
     $s.empty();
     for (g in dsave) {
       if (dsave.hasOwnProperty(g)) {
         $s.append($('<option></option>').text(dsave[g].title).attr('value',g));
-        n=false;
+        nofiles=false;
       }
     }
-    if (n) { $('.hasdrive').hide() }
-    else  { $('.hasdrive').show() }
+    
+    if (nofiles) { 
+      $('.drive .hasfiles',$dialog).hide() 
+    } else { 
+      $('.drive .hasfiles',$dialog).show() 
+    }
+
+    return nofiles;
   }
   function saveLocal() {
     var name, mode = $('#savedialog input[type=radio]:checked').val();
