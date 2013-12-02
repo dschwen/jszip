@@ -24,7 +24,7 @@
         <select id="localoldname">
           <optgroup label="Existing files">
           </optgroup>
-          <option value="-">Other</option>
+          <option value="" class="null">Other</option>
         </select>
       </div>
       <button>
@@ -55,7 +55,7 @@
           <select id="driveoldname">
           <optgroup label="Existing files">
           </optgroup>
-          <option value="-">Other</option>
+          <option value="" class="null">Other</option>
           </select>
         </div>
         <button>
@@ -82,7 +82,8 @@
   </div>
 
   <script>
-    s=Storage({});
+    s=Storage({ local: 'jszipSaves' });
+    s.save({});
   </script>
 </body>
 </html>

@@ -1,9 +1,11 @@
-function Storage(template,defaults) {
+function Storage(defaults) {
   var CLIENT_ID = '961409091716-f13l7n45n8u0uvkjqc9vjjddndd40jgs.apps.googleusercontent.com'
     , SCOPES = 'https://www.googleapis.com/auth/drive'
     , ls = window.localStorage || null
     , gAPICallback = 'storage_googleAPILoaded'
-    , $dialog, dsave = null;
+    , $dialog=$('#storagedialog')
+    , dsave = null
+    , lsave = {};
   
   // default options and option fill-in-from-defaults method
   defaults = defaults || {};
@@ -22,14 +24,16 @@ function Storage(template,defaults) {
     server: null
   }
 
-  $dialog = template.clone();
-
   // hook up buttons
   $('.local button',$dialog).on('click', function() { if(handler.local) handler.local() });
   $('.file button',$dialog).on('click', function() { if(handler.file) handler.file() });
   $('.drive button',$dialog).on('click', function() { if(handler.drive) handler.drive() });
   $('.server button',$dialog).on('click', function() { if(handler.server) handler.server() });
 
+  // select/input behaviour
+  $('.local select',$dialog).on('click', function() { $('.local input',$dialog).val('')});
+  $('.local input',$dialog).on('keydown', function() { $('.local option.null').attr('selected', 'selected'); } );
+  
   /* options
     
     { 
@@ -44,15 +48,18 @@ function Storage(template,defaults) {
       data: file data for saving
     }
   */
+
   function common(options) {
     // insert the basename in the dialog text
-    $('.basename',$dialog).text(options.basename);
+    $('.basename',$dialog).text(options.basename || 'file');
 
     // local files
-    if (ls===null || !('local' in options)) {
-      $('.local',$dialog).hide();
-    } else {
+    if (ls!==null && options.local) {
+      lsave = JSON.parse(ls.getItem(options.local)||'{}');
+      fillLocalSelect();
       $('.local',$dialog).show();
+    } else {
+      $('.local',$dialog).hide();
     }
 
     // server
@@ -61,42 +68,59 @@ function Storage(template,defaults) {
     } else {
       $('.server',$dialog).show();
     }
-
-    // actualCallback
-    options.actualCallback = function() {
-      $dialog.fadeOut();
-      if (options.callback) options.callback();
-    }
   }
 
   function save(options) {
+    options = options || {};
     augment(options,defaults);
+
+    function callback() {
+      $dialog.fadeOut();
+      if (options.callback) options.callback();
+    }
+
+    function local() {
+      var name = $('.local select',this.$dialog).val() || $('.local input',this.$dialog).val();
+      // empty name
+      if (name=='') return;
+      // save to localstorage
+      lsave[name] = btoa(options.data||'');
+      ls.setItem(option.local,JSON.stringify(lsave));
+      // get back into game
+      callback();
+      //step();
+    }
+
     // condition dialog
     common(options);
     $('.open',$dialog).hide(); 
     $('.save',$dialog).show(); 
+    $dialog.fadeIn();
   
     // prepare downloadlink
-    $('.downloadlink',$dialog).on('click', function() {
+    handler.download = function() {
       var a = window.btoa(options.data)
       $(this).attr('href','data:application/octet-stream;base64,'+a);
-    });
-
+    }
+    
     // button for local save
-    $('.local button',$dialog).on('click',function() {
-    });
+    handler.local = local;
   }
 
   function open(options) {
+    options = options || {};
     augment(options,defaults);
+
+    function callback() {
+      $dialog.fadeOut();
+      if (options.callback) options.callback();
+    }
+
     // condition dialog
+    common(options);
     $('.open',$dialog).show(); 
     $('.save',$dialog).hide()
-    $('.file',$dialog).text(options.basename);
-  }
 
-  function fillDriveSelect() {
-    $('<div></div>').text(JSON.stringify(dsave)).appendTo($('body'));
   }
 
   function handleAuthResult(authResult) {
@@ -133,8 +157,7 @@ function Storage(template,defaults) {
               dsave[result[i].id] = result[i];
             }
           }
-          fillDriveSelect('#savedriveoldname');
-          //fillDriveSelect('#restoredriveoldname');
+          fillDriveSelect();
         }
       });
     }
@@ -142,8 +165,8 @@ function Storage(template,defaults) {
     retrievePageOfFiles(initialRequest, []);
   }
 
-  function fillFileSelect() {
-    var g,$s=$('.file optgroup',$dialog),n=true;
+  function fillLocalSelect() {
+    var g,$s=$('.local optgroup',$dialog),nofiles=true;
     $s.empty();
     for (g in lsave) {
       if (lsave.hasOwnProperty(g)) {
@@ -158,6 +181,7 @@ function Storage(template,defaults) {
       $('.file .hasfiles',$dialog).show() 
     }
   }
+
   function fillDriveSelect() {
     if (dsave===null) { return; }
 
@@ -178,6 +202,7 @@ function Storage(template,defaults) {
 
     return nofiles;
   }
+
   function saveLocal() {
     var name, mode = $('#savedialog input[type=radio]:checked').val();
     if (mode=='localnew') {
