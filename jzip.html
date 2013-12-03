@@ -28,6 +28,14 @@
 <div class="dialog" id="storagedialog">
   <h1 class="save">Save <span class="basename"></span>&hellip;</h1>
   <h1 class="open">Open <span class="basename"></span>&hellip;</h1>
+  <div class="server option open">
+    <h2 class="open">&hellip;from server.</h2>
+    <select>
+    </select>
+    <button>
+      <span class="open">Open</span>
+    </button>
+  </div>
   <div class="local option">
     <h2 class="save">&hellip;on this browser</h2>
     <h2 class="open">&hellip;from this browser</h2>
@@ -41,7 +49,7 @@
     </div>
     <button>
       <span class="save">Save</span>
-      <span class="open">Restore</span>
+      <span class="open">Open</span>
     </button>
   </div>
   <div class="file option">
@@ -54,7 +62,7 @@
       <input type="file"/>
       <button>
         <span class="save">Save</span>
-        <span class="open">Restore</span>
+        <span class="open">Open</span>
       </button>
     </div>
   </div>
@@ -72,20 +80,7 @@
       </div>
       <button>
         <span class="save">Save</span>
-        <span class="open">Restore</span>
-      </button>
-    </div>
-    <div class="signedout">
-    </div>
-  </div>
-  <div class="server option open">
-    <h2 class="open">&hellip;from server.</h2>
-    <div class="signedin">
-      <select id="serveroldname">
-      </select>
-      <button>
-        <span class="save">Save</span>
-        <span class="open">Restore</span>
+        <span class="open">Open</span>
       </button>
     </div>
     <div class="signedout">
@@ -781,7 +776,7 @@
       var i, name;
       for (i=0; i<200; ++i) {
         name = objectName(i);
-        if (name=='(self obj)' || name=='yourself') {
+        if (name=='(self object)' || name=='(self obj)' || name=='yourself') {
           console.log('found potential player',i);
           playerObject=i;
           break;
@@ -795,6 +790,13 @@
   storage.open( { 
     pattern: '.+\.z.', 
     basename: 'story file',
+    server: {
+      'data/curses.z5': '"Curses" (Graham Nelson)',
+      'data/minster.z5': '"Christminster (Gareth Rees)',
+      'data/anchor.z8': '"Anchorhead" (Michael S. Gentry)',
+      'data/woman.z8': '"Inside Woman" (Andy Phillips)',
+      'data/tangle.z5': '"Spider and Web" (Andrew Plotkin)'
+    },
     callback: startGame
   } );
 })();

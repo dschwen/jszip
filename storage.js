@@ -25,12 +25,19 @@ function Storage(defaults) {
     server: null
   }
 
+  function run(action) {
+    if (handler[action]) {
+      $('button',$dialog).attr('disabled','disabled');
+      handler[action]();
+    }
+  }
+
   // hook up buttons
-  $('.local button',$dialog).on('click', function(e) { if(handler.local) handler.local(e) });
-  $('.file button',$dialog).on('click', function(e) { if(handler.file) handler.file(e) });
-  $('.drive button',$dialog).on('click', function(e) { if(handler.drive) handler.drive(e) });
-  $('.server button',$dialog).on('click', function(e) { if(handler.server) handler.server(e) });
-  $('.file a.downloadlink',$dialog).on('click', function(e) { if(handler.download) handler.download(e) });
+  $('.local button',$dialog).on('click', function() { run('local'); });
+  $('.file button',$dialog).on('click', function() { run('file'); });
+  $('.drive button',$dialog).on('click', function() { run('drive'); });
+  $('.server button',$dialog).on('click', function() { run('server'); });
+  $('.file a.downloadlink',$dialog).on('click', function() { run('download'); });
 
   // select/input behaviour
   $('.local select',$dialog).on('change', function() { $('.local input',$dialog).val('')});
@@ -76,6 +83,9 @@ function Storage(defaults) {
     // pattern
     $('input[type=text]',$dialog).attr('pattern',options.pattern||'');
 
+    // enable buttons
+    $('button',$dialog).removeAttr('disabled');
+
     // show dialog
     $dialog.fadeIn();
   }
@@ -92,7 +102,10 @@ function Storage(defaults) {
     function local() {
       var name = $('.local select',this.$dialog).val() || $('.local input',this.$dialog).val();
       // empty name
-      if (name=='') return;
+      if (name=='') {
+        callback(false);
+        return;
+      }
       // save to localstorage
       lsave[name] = btoa(options.data||'');
       ls.setItem(options.local,JSON.stringify(lsave));
@@ -169,7 +182,7 @@ function Storage(defaults) {
     common(options);
     $('.open',$dialog).hide(); 
     $('.save',$dialog).show(); 
-    $('.null',$dialog).attr('disabled','');
+    $('.null',$dialog).removeAttr('disabled');
   
     // prepare downloadlink
     handler.download = function(e) {
@@ -265,7 +278,39 @@ function Storage(defaults) {
       xhr.send();
     }
 
+    function fillServerSelect() {
+      var g,$s=$('.server select',$dialog).empty();
+      for (g in options.server) {
+        if (options.server.hasOwnProperty(g)) {
+          $s.append($('<option></option>').text(options.server[g]).attr('value',g));
+        }
+      }
+    }
+
     function server() {
+      var url = $('.server select').val()
+        , xhr = new XMLHttpRequest();
+
+      if (!(url in options.server)) { 
+        callback(null); 
+        return;
+      }
+      xhr.open('GET', url);
+      xhr.responseType = 'arraybuffer';
+      xhr.onload = function() {
+        if (xhr.status == 200) {
+          callback(new Uint8Array(xhr.response));
+          return;
+        } else {
+          callback(null);
+          return;
+        }
+      };
+      xhr.onerror = function() {
+        callback(null);
+        return;
+      };
+      xhr.send();
     }
 
     // condition dialog
@@ -279,6 +324,7 @@ function Storage(defaults) {
       $('.server',$dialog).hide();
       handler.server = null;
     } else {
+      fillServerSelect(options.pattern||'');
       $('.server',$dialog).show();
       handler.server = server;
     }
