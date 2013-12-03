@@ -26,10 +26,11 @@ function Storage(defaults) {
   }
 
   // hook up buttons
-  $('.local button',$dialog).on('click', function() { if(handler.local) handler.local() });
-  $('.file button',$dialog).on('click', function() { if(handler.file) handler.file() });
-  $('.drive button',$dialog).on('click', function() { if(handler.drive) handler.drive() });
-  $('.server button',$dialog).on('click', function() { if(handler.server) handler.server() });
+  $('.local button',$dialog).on('click', function(e) { if(handler.local) handler.local(e) });
+  $('.file button',$dialog).on('click', function(e) { if(handler.file) handler.file(e) });
+  $('.drive button',$dialog).on('click', function(e) { if(handler.drive) handler.drive(e) });
+  $('.server button',$dialog).on('click', function(e) { if(handler.server) handler.server(e) });
+  $('.file a.downloadlink',$dialog).on('click', function(e) { if(handler.download) handler.download(e) });
 
   // select/input behaviour
   $('.local select',$dialog).on('change', function() { $('.local input',$dialog).val('')});
@@ -102,24 +103,21 @@ function Storage(defaults) {
     }
 
     function drive() {
-      var id=null, name, mode = $('#savedialog input[type=radio]:checked').val(), method;
-      if (mode=='drivenew') {
-        name = $('#savedrivenewname').val();
+      var id = $('.drive select',$dialog).val() || null
+        , name = $('.drive input',$dialog).val();
+      if (id !== null) {
         if (name=='') return;
-      } else if (mode=='driveold') {
-        id = $('#savedriveoldname').val();
+      } else {
         if (dsave===null || !(id in dsave)) return;
         name = dsave[id].title;
-      } else {
-        return;
-      }
+      } 
 
       // save to Google Drive
       var boundary = '-------314159265358979323846'
         , delimiter = "\r\n--" + boundary + "\r\n"
         , close_delim = "\r\n--" + boundary + "--"
         , metadate
-        , base64Data = btoa(saveGame);
+        , base64Data = btoa(options.data||'');
       
       // specify original metadata and use method 'PUT' to allow update of existing file
       if (id) {
@@ -168,15 +166,15 @@ function Storage(defaults) {
     $dialog.fadeIn();
   
     // prepare downloadlink
-    handler.download = function() {
-      var a = window.btoa(options.data)
-      $(this).attr('href','data:application/octet-stream;base64,'+a);
+    handler.download = function(e) {
+      var a = window.btoa(options.data);
+       $('.file a.downloadlink',$dialog).attr('href','data:application/octet-stream;base64,'+a);
     }
     
     // handlers
     handler.local = local;
     handler.drive = drive;
-    //handler.file = file;
+    handler.file = null;
   }
 
   function open(options) {
@@ -218,6 +216,31 @@ function Storage(defaults) {
         callback(e.target.result);
       }
       reader.readAsBinaryString(f);
+    }
+
+    function drive() {
+      var id = $('.drive select').val()
+        , accessToken = gapi.auth.getToken().access_token
+        , url = dsave[id].downloadUrl
+        , e=restoreOpts
+        , xhr = new XMLHttpRequest();
+
+      if (dsave===null || !(id in dsave)) { return; }
+
+      xhr.open('GET', url);
+      xhr.setRequestHeader('Authorization', 'Bearer ' + accessToken);
+      xhr.responseType = 'arraybuffer';
+      xhr.onload = function() {
+        if (xhr.status == 200) {
+          callback(new Uint8Array(xhr.response));
+        } else {
+          callback(null));
+        }
+      };
+      xhr.onerror = function() {
+        callback(null);
+      };
+      xhr.send();
     }
 
     // condition dialog
@@ -320,44 +343,6 @@ function Storage(defaults) {
   }
 
 
-  function restoreDrive() {
-    var e=restoreOpts, id = $('#restoredriveoldname').val();
-    if (e==null) {
-      throw Error('No z_restore options available!');
-    }
-    if (dsave===null || !(id in dsave)) { return; }
-    downloadDriveFile(id);
-  }
-  
-  function downloadDriveFile(id) {
-    var accessToken = gapi.auth.getToken().access_token
-      , url = dsave[id].downloadUrl
-      , e=restoreOpts
-      , xhr = new XMLHttpRequest();
-    xhr.open('GET', url);
-    xhr.setRequestHeader('Authorization', 'Bearer ' + accessToken);
-    xhr.responseType = 'arraybuffer';
-    xhr.onload = function() {
-      if (xhr.status == 200) {
-        FS.createDataFile('/', 'save.sav', new Uint8Array(xhr.response), true, true);
-        restoreOpts=null;
-        $restore.fadeOut();
-        zRestore(e.count,e.o0,e.o1,e.o2);
-        FS.unlink('save.sav');
-      } else {
-        error("Google Drive returned an error: " + xhr.statusText );
-      }
-      step();
-    };
-    xhr.onerror = function() {
-      // should probably report an error first
-      error("Error fetching file from Google Drive.");
-      $restore.fadeOut();
-      step(); 
-    };
-    xhr.send();
-  }
-  
   $('.signedout',$dialog).append($('<div id="google_signin_button"></div>'));
   $('.open',$dialog).hide();
 
