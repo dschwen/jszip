@@ -5,6 +5,7 @@ function Storage(defaults) {
     , gAPICallback = 'storage_googleAPILoaded'
     , $dialog=$('#storagedialog')
     , dsave = null
+    , driveFilesCallback = null
     , lsave = {};
   
   // default options and option fill-in-from-defaults method
@@ -33,6 +34,8 @@ function Storage(defaults) {
   // select/input behaviour
   $('.local select',$dialog).on('change', function() { $('.local input',$dialog).val('')});
   $('.local input',$dialog).on('keydown', function() { $('.local option.null').attr('selected', 'selected'); } );
+  $('.drive select',$dialog).on('change', function() { $('.drive input',$dialog).val('')});
+  $('.drive input',$dialog).on('keydown', function() { $('.drive option.null').attr('selected', 'selected'); } );
   
   /* options
     
@@ -61,6 +64,13 @@ function Storage(defaults) {
     } else {
       $('.local',$dialog).hide();
     }
+
+    // drive 
+    driveFilesCallback = function() { // in case we have an ongoing login process
+      fillDriveSelect(options.extension || '');
+    } 
+    handler.refresh = retrieveAllFiles; // manual refresh
+    fillDriveSelect(options.extension || ''); // populate select with cached dsave data now
 
     // server
     if (!('server' in options)) {
@@ -144,7 +154,8 @@ function Storage(defaults) {
           });
 
       request.execute(function(e){
-        // refresh the file lists
+        // refresh the dsave cache (file list)
+        driveFilesCallback = null; // no need to perform any further action
         retrieveAllFiles();
         callback();
       });
@@ -162,8 +173,10 @@ function Storage(defaults) {
       $(this).attr('href','data:application/octet-stream;base64,'+a);
     }
     
-    // button for local save
+    // handlers
     handler.local = local;
+    handler.drive = drive;
+    //handler.file = file;
   }
 
   function open(options) {
@@ -214,7 +227,7 @@ function Storage(defaults) {
 
     // file upload / downloadlink
     handler.download = null;
-    handler.file = ;
+    handler.file = file;
 
     // button for local save
     handler.local = local;
@@ -255,7 +268,8 @@ function Storage(defaults) {
               dsave[result[i].id] = result[i];
             }
           }
-          fillDriveSelect();
+          // a dialog may have requested an update as soon as the dsave list is retrieved
+          if (driveFilesCallback) driveFilesCallback();
         }
       });
     }
