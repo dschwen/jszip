@@ -16,7 +16,7 @@ function Storage(defaults) {
       if (b.hasOwnProperty(k) && !(k in a)) { a[k] = b[k]; }
     }
   }
-  augment(defaults, { basename: 'file', binary: true });
+  augment(defaults, { basename: 'file', binary: true, data: '' });
 
   var handler = {
     local: null,
@@ -94,11 +94,32 @@ function Storage(defaults) {
     options = options || {};
     augment(options,defaults);
 
-    function callback() {
+    function callback(success,msg) {
       $dialog.fadeOut();
-      if (options.callback) options.callback();
+      if (options.callback) options.callback(success,msg);
     }
 
+    // process save data (handles strings, arrays of numbers, Uint8Arrays etc.)
+    var stringified, base64Data, l, data=options.data;
+    if (data.length===undefined || data.length===0) {
+      callback(false,"Empty or unknown data type.");
+      return;
+    }
+    if (typeof options.data === 'string') {
+      stringified = options.data;
+    } else if (typeof options.data[0] === 'number') {
+      stringified = ''; 
+      l = options.data.length;
+      for (i=0;i<l;++i) {
+        stringified += String.fromCharCode(options.data[i]);
+      }
+    } else {
+      callback(false,"Unknown options.data type in Storage.");
+      return;
+    }
+    base64Data = btoa(stringified);
+    
+    // save in localStorage
     function local() {
       var name = $('.local select',this.$dialog).val() || $('.local input',this.$dialog).val();
       // empty name
@@ -107,17 +128,21 @@ function Storage(defaults) {
         return;
       }
       // save to localstorage
-      lsave[name] = btoa(options.data||'');
+      lsave[name] = base64Data;
       ls.setItem(options.local,JSON.stringify(lsave));
-      // get back into game
       callback(true);
-      //step();
     }
 
+    // save on Google Drive
     function drive() {
       var id = $('.drive select',$dialog).val() || null
-        , name = $('.drive input',$dialog).val();
-      if (id !== null) {
+        , name = $('.drive input',$dialog).val()
+        , boundary = '-------314159265358979323846'
+        , delimiter = "\r\n--" + boundary + "\r\n"
+        , close_delim = "\r\n--" + boundary + "--"
+        , metadata;
+
+      if (id === null) {
         if (name=='') {
           callback(false);
           return;
@@ -129,13 +154,6 @@ function Storage(defaults) {
         }
         name = dsave[id].title;
       } 
-
-      // save to Google Drive
-      var boundary = '-------314159265358979323846'
-        , delimiter = "\r\n--" + boundary + "\r\n"
-        , close_delim = "\r\n--" + boundary + "--"
-        , metadate
-        , base64Data = btoa(options.data||'');
       
       // specify original metadata and use method 'PUT' to allow update of existing file
       if (id) {
@@ -173,7 +191,7 @@ function Storage(defaults) {
         // refresh the dsave cache (file list)
         driveFilesCallback = null; // no need to perform any further action
         retrieveAllFiles();
-        callback(true);
+        callback(true,"Save complete.");
         return; 
       });
     }
@@ -186,8 +204,7 @@ function Storage(defaults) {
   
     // prepare downloadlink
     handler.download = function(e) {
-      var a = window.btoa(options.data);
-       $('.file a.downloadlink',$dialog).attr('href','data:application/octet-stream;base64,'+a);
+       $('.file a.downloadlink',$dialog).attr('href','data:application/octet-stream;base64,'+base64Data);
     }
     
     // handlers
