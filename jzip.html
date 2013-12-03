@@ -22,6 +22,10 @@
 
 <div id="mapcontainer">
   <div class="handle"></div>
+  <div class="menu">
+    <span class="save">Save map</span>
+    <span class="open">Open map</span>
+  </div>
   <div class="view"></div>
 </div>
 
@@ -291,13 +295,35 @@
   // setup map widget
   function setupMap() {
     var shown=false;
-    $('.handle',$mapcontainer).click(function(){
+    $('.handle',$mapcontainer).on('click', function(){
       shown = !shown;
       $mapcontainer.css('right',shown?'80%':'');
     });
+    $('.menu>.save',$mapcontainer).on('click', function() {
+      storage.save( {
+        basename: 'automap',
+        pattern: '.+\.zmap', 
+        local: 'jszipMaps',
+        data:  JSON.stringify(automap)
+      } );
+    });
+    $('.menu>.open',$mapcontainer).on('click', function() {
+      storage.open( { 
+        basename: 'automap',
+        pattern: '.+\.zmap', 
+        local: 'jszipMaps',
+        callback: function(data) {
+          if (data===null) {
+            error('Loading automap failed.');
+          } else {
+            automap = JSON.parse(data);
+            map.update(automap);
+          }
+        }
+      } );
+    });
     map.update(automap);
   }
-
   setupMap();
 
   // functions to be called from the c code
@@ -566,7 +592,10 @@
       pattern: '.+\.sav', 
       local: 'jszipSaves',
       data:  FS.readFile('save.sav'),
-      callback: function(success) {
+      callback: function(success,msg) {
+        if (!success) {
+          error("Save failed! " + success + (msg||''));
+        }
         step();
       }
     } );

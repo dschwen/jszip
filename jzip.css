@@ -71,6 +71,24 @@ canvas {
   position: absolute;
 }
 
+#mapcontainer>.menu {
+  position: absolute;
+  z-index: 50;
+  top: 0.5em;
+  left: 40px;
+}
+#mapcontainer>.menu>span {
+  border: 1px solid gray;
+  padding: 0.2em;
+  margin: 0.1em;
+  background-color: #eee;
+  cursor: pointer;
+  font-size: 10pt;
+}
+#mapcontainer>.menu>span:hover {
+  background-color: #ddd;
+}
+
 #inputline {
   position: relative;
 }
