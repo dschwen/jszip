@@ -312,6 +312,7 @@
         basename: 'automap',
         pattern: '.+\.zmap', 
         local: 'jszipMaps',
+        binary: false,
         callback: function(data) {
           if (data===null) {
             error('Loading automap failed.');

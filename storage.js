@@ -105,13 +105,13 @@ function Storage(defaults) {
       callback(false,"Empty or unknown data type.");
       return;
     }
-    if (typeof options.data === 'string') {
-      stringified = options.data;
-    } else if (typeof options.data[0] === 'number') {
+    if (typeof data === 'string') {
+      stringified = data;
+    } else if (typeof data[0] === 'number') {
       stringified = ''; 
-      l = options.data.length;
+      l = data.length;
       for (i=0;i<l;++i) {
-        stringified += String.fromCharCode(options.data[i]);
+        stringified += String.fromCharCode(data[i]);
       }
     } else {
       callback(false,"Unknown options.data type in Storage.");
@@ -220,6 +220,13 @@ function Storage(defaults) {
 
     function callback(data) {
       $dialog.fadeOut();
+      if (options.binary===false) { 
+        var stringified = '', l = data.length;
+        for (i=0;i<l;++i) {
+          stringified += String.fromCharCode(data[i]);
+        }
+        data = stringified;
+      }
       if (options.callback) options.callback(data);
     }
 
