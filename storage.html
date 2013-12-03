@@ -82,8 +82,10 @@
   </div>
 
   <script>
-    s=Storage({ local: 'jszipSaves', data: '0000' });
-    s.save({});
+    s=Storage();
+    s.save({ local: 'jszipSaves', data: '0000', pattern: '.+\.sav' });
+    //s.open({ local: 'jszipSaves', pattern: '\.sav$',callback: function(d) { console.log(d)} });
+    //s.save({});
   </script>
 </body>
 </html>

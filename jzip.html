@@ -3,6 +3,7 @@
 <script src="http://code.jquery.com/jquery-1.10.1.min.js"></script>
 <script src="jzip.js"></script>
 <script src="map.js"></script>
+<script src="storage.js"></script>
 <link href="jzip.css" rel="stylesheet" type="text/css">
 <link href="storage.css" rel="stylesheet" type="text/css">
 </head>
@@ -24,81 +25,70 @@
   <div class="view"></div>
 </div>
 
-<div class="dialog" id="savedialog">
-  <h1>Save game&hellip;</h1>
-  <div class="localsave">
-    <h2>&hellip;on this browser</h2>
-    <div class="option">
-      <input type="radio" name="savetype" value="localnew" checked/>
-      <input type="text" id="savelocalnewname" placeholder="New File"/>
-      <br/>
-      <div class="haslocal">
-      <input type="radio" name="savetype" value="localold"/>
-      <select id="savelocaloldname">
-      <option>Loading...</option>
+<div class="dialog" id="storagedialog">
+  <h1 class="save">Save <span class="basename"></span>&hellip;</h1>
+  <h1 class="open">Open <span class="basename"></span>&hellip;</h1>
+  <div class="local option">
+    <h2 class="save">&hellip;on this browser</h2>
+    <h2 class="open">&hellip;from this browser</h2>
+    <input class="save" type="text" placeholder="New file"/>
+    <div class="hasfiles">
+      <select>
+        <option value="" class="null save">New file</option>
+        <optgroup label="Existing files">
+        </optgroup>
       </select>
+    </div>
+    <button>
+      <span class="save">Save</span>
+      <span class="open">Restore</span>
+    </button>
+  </div>
+  <div class="file option">
+    <h2 class="save">&hellip;on this computer</h2>
+    <h2 class="open">&hellip;from this computer</h2>
+    <div class="save">
+      <a download="save.sav" class="downloadlink" href="">Download <span class="basename"></span>&hellip;</a>
+    </div>
+    <div class="open">
+      <input type="file"/>
+      <button>
+        <span class="save">Save</span>
+        <span class="open">Restore</span>
+      </button>
+    </div>
+  </div>
+  <div class="drive option">
+    <h2 class="save">&hellip;on Google Drive</h2>
+    <h2 class="open">&hellip;from Google Drive</h2>
+    <div class="signedin">
+      <input class="save" type="text" placeholder="New file"/>
+      <div class="hasfiles">
+        <select>
+          <option value="" class="null save">New file</option>
+          <optgroup label="Existing files">
+          </optgroup>
+        </select>
       </div>
-      <br/>
-      <button>Save</button>
+      <button>
+        <span class="save">Save</span>
+        <span class="open">Restore</span>
+      </button>
+    </div>
+    <div class="signedout">
     </div>
   </div>
-  <div class="filesave">
-    <h2>&hellip;on this computer</h2>
-    <div class="option">
-      <a download="save.sav" id="downloadsave" href="">Download save file&hellip;</a>
-    </div>
-  </div>
-  <div class="drivesave">
-    <h2>&hellip;on Google Drive</h2>
-    <div class="option drive">
-      <input type="radio" name="savetype" value="drivenew" checked/>
-      <input type="text" id="savedrivenewname" placeholder="New File"/>
-      <br/>
-      <div class="hasdrive">
-      <input type="radio" name="savetype" value="driveold"/>
-      <select id="savedriveoldname">
-      <option>Loading...</option>
+  <div class="server option open">
+    <h2 class="open">&hellip;from server.</h2>
+    <div class="signedin">
+      <select id="serveroldname">
       </select>
-      </div>
-      <br/>
-      <button>Save</button>
+      <button>
+        <span class="save">Save</span>
+        <span class="open">Restore</span>
+      </button>
     </div>
-    <div class="option auth">
-      <button class="signin">Sign in with Google</button>
-    </div>
-  </div>
-</div>
-
-<div class="dialog" id="restoredialog">
-  <h1>Restore game&hellip;</h1>
-  <div class="localrestore haslocal">
-    <h2>&hellip;from this browser</h2>
-    <div class="option">
-      <select id="restorelocaloldname">
-      <option>Loading...</option>
-      </select>
-      <br/>
-      <button>Restore</button>
-    </div>
-  </div>
-  <div class="filerestore">
-    <h2>&hellip;from this computer</h2>
-    <div class="option">
-      <input type="file" id="uploadfile"/>
-      <br/>
-      <button>Restore</button>
-    </div>
-  </div>
-  <div class="driverestore hasdrive">
-    <h2>&hellip;from Google Drive</h2>
-    <div class="option drive">
-      <select id="restoredriveoldname">
-      <option>Loading...</option>
-      </select>
-      <button>Restore</button>
-    </div>
-    <div class="option auth">
-      <button class="signin">Sign in with Google</button>
+    <div class="signedout">
     </div>
   </div>
 </div>
@@ -106,22 +96,16 @@
 <script>
 (function(){
   var $input = $('#input'), focusInput = true
-    , $save = $('#savedialog')
-    , $dload = $('#downloadsave')
-    , $restore = $('#restoredialog')
     , $statw = $('#statuswindow')
     , $mapcontainer = $('#mapcontainer')
+    , storage = Storage()
     , ls = window.localStorage || null
-    , lsave = {}                        // copy of localStorage savegames
-    , dsave = null                      // list of google drive savegames (null if not authenticated)
-    , saveGame = ''                     // current savegame
     , history = ( ls && JSON.parse(ls.getItem('jszipHistory')||'[]') ) || []
     , hindex = history.length
     , autocomplete = {}, sortedWords = []
     , automap = {}, lastDirection=null, lastRoom=null, map = Map($mapcontainer), playerObject=null
     , hmax = 100                        // size of command history
     , moveCount = 0                     // number of commands entered
-    , restoreOpts = null
     , keyCallback = null
     , lineCallback = null
     , CLIENT_ID = '961409091716-f13l7n45n8u0uvkjqc9vjjddndd40jgs.apps.googleusercontent.com'
@@ -320,32 +304,6 @@
   }
 
   setupMap();
-
-  // get saves from localStorage
-  if (ls) {
-    lsave = JSON.parse(ls.getItem('jszipSaves')||'{}');
-  } else {
-    $('.localsave').hide();
-  }
-
-  // build save/restore widgets
-  $save.hide();
-  $restore.hide();
-  $dload.click(function(){
-    $save.fadeOut();
-    step();
-  });
-  // auto select radio buttons
-  $('#savelocaloldname').focus(function(){$('#savedialog input[type=radio]').val(['localold']);});
-  $('#savelocalnewname').focus(function(){$('#savedialog input[type=radio]').val(['localnew']);});
-  $('#savedriveoldname').focus(function(){$('#savedialog input[type=radio]').val(['driveold']);});
-  $('#savedrivenewname').focus(function(){$('#savedialog input[type=radio]').val(['drivenew']);});
-  // save/restore buttons
-  $('.localsave button',$save).click(saveLocal);
-  $('.localrestore button',$restore).click(restoreLocal);
-  $('.drivesave button',$save).click(saveDrive);
-  $('.driverestore .drive button',$restore).click(restoreDrive);
-  $('.filerestore button',$restore).click(function(){restoreFile($('#uploadfile')[0].files)});
 
   // functions to be called from the c code
   var out = window['output'] = { 
@@ -601,21 +559,32 @@
     }
   }
   function taskSave() {
-    fillFileSelect('#savelocaloldname');
-    fillDriveSelect('#savelocaloldname');
-    $save.fadeIn();
-    // store savegame as string
-    var raw = FS.readFile('save.sav'),i,l=raw.length;
-    saveGame = ''; for (i=0;i<l;++i) saveGame+=String.fromCharCode(raw[i]);
+    storage.save( { 
+      basename: 'savegame',
+      pattern: '.+\.sav', 
+      local: 'jszipSaves',
+      data:  FS.readFile('save.sav'),
+      callback: function(success) {
+      }
+    } );
     FS.unlink('save.sav');
-    // base64 encode the save.sav tmp for download
-    $dload.attr('href','data:application/octet-stream;base64,'+window.btoa(saveGame));
   }
   function taskRestore(e) {
-    fillFileSelect('#restorelocaloldname');
-    $restore.fadeIn();
-    restoreOpts=e;
-    // provide the save.sav tmp file
+    storage.open( { 
+      basename: 'savegame',
+      pattern: '.+\.sav', 
+      local: 'jszipSaves',
+      callback: function(data) {
+        if (data===null) {
+          error('Restore failed.');
+        } else {
+          FS.createDataFile('/', 'save.sav', data, true, true);
+          zRestore(e.count,e.o0,e.o1,e.o2);
+          FS.unlink('save.sav');
+        }
+        step();
+      }
+    } );
   }
 
   
@@ -638,220 +607,6 @@
   }
   function error(t) {
     $('<div class="error"></div>').text(t).insertBefore($('#inputline'));
-  }
-  function fillFileSelect(s) {
-    var g,$s=$(s),n=true;
-    $s.empty();
-    for (g in lsave) {
-      if (lsave.hasOwnProperty(g)) {
-        $s.append($('<option></option>').text(g).attr('value',g));
-        n=false;
-      }
-    }
-    if (n) { $('.haslocal').hide() }
-    else   { $('.haslocal').show() }
-  }
-  function fillDriveSelect(s) {
-    if (dsave===null) { return; }
-
-    var g,$s=$(s),n=true;
-    $s.empty();
-    for (g in dsave) {
-      if (dsave.hasOwnProperty(g)) {
-        $s.append($('<option></option>').text(dsave[g].title).attr('value',g));
-        n=false;
-      }
-    }
-    if (n) { $('.hasdrive').hide() }
-    else  { $('.hasdrive').show() }
-  }
-  function saveLocal() {
-    var name, mode = $('#savedialog input[type=radio]:checked').val();
-    if (mode=='localnew') {
-      name = $('#savelocalnewname').val();
-    } else if (mode=='localold') {
-      name = $('#savelocaloldname').val();
-    } else {
-      return;
-    }
-    // empty name
-    if (name=='') return;
-    // save to localstorage
-    lsave[name] = btoa(saveGame);
-    ls.setItem('jszipSaves',JSON.stringify(lsave));
-    // get back into game
-    $save.fadeOut();
-    step();
-  }
-  function restoreLocal() {
-    var e=restoreOpts, name = $('#restorelocaloldname').val();
-    if (e==null) {
-      throw Error('No z_restore options available!');
-    }
-    FS.createDataFile('/', 'save.sav', atob(lsave[name]), true, true);
-    restoreOpts=null;
-    $restore.fadeOut();
-    zRestore(e.count,e.o0,e.o1,e.o2);
-    step();
-  }
-  function saveDrive() {
-    var id=null, name, mode = $('#savedialog input[type=radio]:checked').val(), method;
-    if (mode=='drivenew') {
-      name = $('#savedrivenewname').val();
-      if (name=='') return;
-    } else if (mode=='driveold') {
-      id = $('#savedriveoldname').val();
-      if (dsave===null || !(id in dsave)) return;
-      name = dsave[id].title;
-    } else {
-      return;
-    }
-
-    // save to Google Drive
-    var boundary = '-------314159265358979323846'
-      , delimiter = "\r\n--" + boundary + "\r\n"
-      , close_delim = "\r\n--" + boundary + "--"
-      , metadate
-      , base64Data = btoa(saveGame);
-    
-    // specify original metadata and use method 'PUT' to allow update of existing file
-    if (id) {
-      metadata = dsave[id];
-      id='/'+id; // append /id to xhr url causes an update of an existing file
-      method='PUT';
-    } else {
-      metadata = {
-        'title': name,
-        'mimeType': 'application/octet-stream'
-      };
-      id='';
-      method='POST';
-    }
-
-    var multipartRequestBody =
-          delimiter +
-          'Content-Type: application/json\r\n\r\n' +
-          JSON.stringify(metadata) +
-          delimiter +
-          'Content-Type: application/octet-stream\r\n' +
-          'Content-Transfer-Encoding: base64\r\n' +
-          '\r\n' +
-          base64Data +
-          close_delim
-      , request = gapi.client.request({
-          'path': '/upload/drive/v2/files'+id,
-          'method': method, 'alt': 'json',
-          'params': {'uploadType': 'multipart', 'alt': 'json'},
-          'headers': { 'Content-Type': 'multipart/mixed; boundary="' + boundary + '"' },
-          'body': multipartRequestBody
-        });
-
-    request.execute(function(e){
-      // refresh the file lists
-      retrieveAllFiles();
-      // get back into game
-      $save.fadeOut();
-      step();
-    });
-  }
-  function restoreDrive() {
-    var e=restoreOpts, id = $('#restoredriveoldname').val();
-    if (e==null) {
-      throw Error('No z_restore options available!');
-    }
-    if (dsave===null || !(id in dsave)) { return; }
-    downloadDriveFile(id);
-  }
-  function restoreFile(fl) {
-    if (fl.length!=1) { return; }
-    var f=fl[0];
-
-    // instantiate a new FileReader
-    var reader = new FileReader();
-    reader.onload=function(e) {
-      FS.createDataFile('/', 'save.sav', e.target.result, true, true);
-      restoreOpts=null;
-      $restore.fadeOut();
-      zRestore(e.count,e.o0,e.o1,e.o2);
-      FS.unlink('save.sav');
-      step();
-    }
-    reader.readAsBinaryString(f);
-  }
-  window['googleAPILoaded'] = function(){
-    setTimeout(checkAuth, 1);
-  }
-  function checkAuth() {
-    gapi.auth.authorize( { 'client_id': CLIENT_ID, 'scope': SCOPES, 'immediate': true}, handleAuthResult);
-  }
-  function handleAuthResult(authResult) {
-    if (authResult && !authResult.error) {
-      // Access token has been successfully retrieved, requests can be sent to the API.
-      $('.option.drive').show();
-      $('.option.auth').hide();
-      // fetch list of files
-      gapi.client.load('drive', 'v2', function() {
-        console.log("Google Drive API loaded.");
-        retrieveAllFiles();
-      });
-    } else {
-      $('.option.auth button').click(function() {
-        gapi.auth.authorize( {'client_id': CLIENT_ID, 'scope': SCOPES, 'immediate': false}, handleAuthResult);
-      });
-    }
-  }
-  function retrieveAllFiles() {
-    var retrievePageOfFiles = function(request, result) {
-      request.execute(function(resp) {
-        result = result.concat(resp.items);
-        var nextPageToken = resp.nextPageToken, num, suf;
-        if (nextPageToken) {
-          request = gapi.client.drive.files.list({'pageToken': nextPageToken });
-          retrievePageOfFiles(request, result);
-        } else {
-          // retrieved result, build dsave list of eligible files that are not in trash
-          dsave = {};
-          for (var i=0; i<result.length; ++i ) {
-            if (result[i].mimeType == 'application/octet-stream' &&
-                result[i].labels.trashed == false) {
-              dsave[result[i].id] = result[i];
-            }
-          }
-          fillDriveSelect('#savedriveoldname');
-          fillDriveSelect('#restoredriveoldname');
-        }
-      });
-    }
-    var initialRequest = gapi.client.drive.files.list();
-    retrievePageOfFiles(initialRequest, []);
-  }
-  function downloadDriveFile(id) {
-    var accessToken = gapi.auth.getToken().access_token
-      , url = dsave[id].downloadUrl
-      , e=restoreOpts
-      , xhr = new XMLHttpRequest();
-    xhr.open('GET', url);
-    xhr.setRequestHeader('Authorization', 'Bearer ' + accessToken);
-    xhr.responseType = 'arraybuffer';
-    xhr.onload = function() {
-      if (xhr.status == 200) {
-        FS.createDataFile('/', 'save.sav', new Uint8Array(xhr.response), true, true);
-        restoreOpts=null;
-        $restore.fadeOut();
-        zRestore(e.count,e.o0,e.o1,e.o2);
-        FS.unlink('save.sav');
-      } else {
-        error("Google Drive returned an error: " + xhr.statusText );
-      }
-      step();
-    };
-    xhr.onerror = function() {
-      // should probably report an error first
-      error("Error fetching file from Google Drive.");
-      $restore.fadeOut();
-      step(); 
-    };
-    xhr.send();
   }
   function addToAutocomplete(text) {
     // add words from text to autocomplete hash (with current moveCount)
@@ -959,52 +714,6 @@
   // prepare global variable object
   window.globalvars = {};
 
-  // Start z-machine
-  //spinupJS('catseye.z3');
-  //spinupJS('moonmist.z3');
-  //spinupJS('zork2.z3');
-  spinupJS('curses.z5');
-
-  // set the screen witdth in monospace characters (and update on resize)
-  function setupScreen() {
-    var w = testScreenWidth();
-    function update(w) {
-      // set variable and line template
-      window['globalvars']['screen_cols'] = w;
-      out.emptyLine = Array(w+1).join(" ")
-      // clear status buffer
-      for (var i=0; i<out.line.length; ++i) {
-        out.line[i]=out.emptyLine;
-      }
-    }
-    $(window).on('resize',function() {
-      // update the screen_cols variable and z-machine register on resize
-      w = testScreenWidth();
-      jsrResizeWindow(w);
-      update(w);
-    });
-    update(w);
-  };
-  setupScreen();
-  
-  // at this point the globalvars object is populated
-  
-  // automapping for >Z3 games is challenging
-  if (window['globalvars']['h_type']>3) {
-    // search for player object
-    //"(self object)" "yourself"
-    // TODO find number of objects
-    var i, name;
-    for (i=0; i<200; ++i) {
-      name = objectName(i);
-      if (name=='(self obj)' || name=='yourself') {
-        console.log('found potential player',i);
-        playerObject=i;
-        break;
-      }
-    }
-  }
-  
   // call interpreter
   function step() {
     try {
@@ -1029,9 +738,69 @@
       }
     }
   }
-  step();
+
+  // Start z-machine
+  function startGame(data) {
+    if (data===null) {
+      error('no game selected');
+      return;
+    } else {
+      FS.createDataFile('/', 'game.z5', data, true, true);
+      spinupJS('game.z5');
+    }
+
+    // set the screen witdth in monospace characters (and update on resize)
+    function setupScreen() {
+      var w = testScreenWidth();
+      function update(w) {
+        // set variable and line template
+        window['globalvars']['screen_cols'] = w;
+        out.emptyLine = Array(w+1).join(" ")
+        // clear status buffer
+        for (var i=0; i<out.line.length; ++i) {
+          out.line[i]=out.emptyLine;
+        }
+      }
+      $(window).on('resize',function() {
+        // update the screen_cols variable and z-machine register on resize
+        w = testScreenWidth();
+        jsrResizeWindow(w);
+        update(w);
+      });
+      update(w);
+    };
+    setupScreen();
+    
+    // at this point the globalvars object is populated
+    
+    // automapping for >Z3 games is challenging
+    if (window['globalvars']['h_type']>3) {
+      // search for player object
+      //"(self object)" "yourself"
+      // TODO find number of objects
+      var i, name;
+      for (i=0; i<200; ++i) {
+        name = objectName(i);
+        if (name=='(self obj)' || name=='yourself') {
+          console.log('found potential player',i);
+          playerObject=i;
+          break;
+        }
+      }
+    }
+
+    step();
+  }
+
+  storage.open( { 
+    pattern: '.+\.z.', 
+    basename: 'story file',
+    callback: startGame
+  } );
 })();
 </script>
 <script src="https://apis.google.com/js/client.js?onload=googleAPILoaded"></script>
 </body>
 </html>
+
+

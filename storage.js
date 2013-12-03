@@ -73,12 +73,11 @@ function Storage(defaults) {
     handler.refresh = retrieveAllFiles; // manual refresh
     fillDriveSelect(options.pattern||''); // populate select with cached dsave data now
 
-    // server
-    if (!('server' in options)) {
-      $('.server',$dialog).hide();
-    } else {
-      $('.server',$dialog).show();
-    }
+    // pattern
+    $('input[type=text]',$dialog).attr('pattern',options.pattern||'');
+
+    // show dialog
+    $dialog.fadeIn();
   }
 
   function save(options) {
@@ -98,7 +97,7 @@ function Storage(defaults) {
       lsave[name] = btoa(options.data||'');
       ls.setItem(options.local,JSON.stringify(lsave));
       // get back into game
-      callback();
+      callback(true);
       //step();
     }
 
@@ -106,9 +105,15 @@ function Storage(defaults) {
       var id = $('.drive select',$dialog).val() || null
         , name = $('.drive input',$dialog).val();
       if (id !== null) {
-        if (name=='') return;
+        if (name=='') {
+          callback(false);
+          return;
+        }
       } else {
-        if (dsave===null || !(id in dsave)) return;
+        if (dsave===null || !(id in dsave)) {
+          callback(false);
+          return;
+        }
         name = dsave[id].title;
       } 
 
@@ -155,7 +160,8 @@ function Storage(defaults) {
         // refresh the dsave cache (file list)
         driveFilesCallback = null; // no need to perform any further action
         retrieveAllFiles();
-        callback();
+        callback(true);
+        return; 
       });
     }
 
@@ -163,7 +169,7 @@ function Storage(defaults) {
     common(options);
     $('.open',$dialog).hide(); 
     $('.save',$dialog).show(); 
-    $dialog.fadeIn();
+    $('.null',$dialog).attr('disabled','');
   
     // prepare downloadlink
     handler.download = function(e) {
@@ -173,8 +179,9 @@ function Storage(defaults) {
     
     // handlers
     handler.local = local;
-    handler.drive = drive;
     handler.file = null;
+    handler.drive = drive;
+    handler.server = null;
   }
 
   function open(options) {
@@ -187,8 +194,14 @@ function Storage(defaults) {
     }
 
     function local() {
-      var name = $('#restorelocaloldname').val();
-      callback(atob(lsave[name]));
+      var name = $('.local select').val();
+      if (name in lsave) { 
+        callback(atob(lsave[name]));
+        return; 
+      } else {
+        callback(null);
+        return; 
+      }
 
       /*
       function(data) {
@@ -207,13 +220,17 @@ function Storage(defaults) {
 
     function file() {
       fl = $('.file input[type=file]',$dialog)[0].files;
-      if (fl.length!==1) { return; }
+      if (fl.length!==1) { 
+        callback(null);
+        return; 
+      }
       var f=fl[0];
 
       // instantiate a new FileReader
       var reader = new FileReader();
       reader.onload=function(e) {
         callback(e.target.result);
+        return;
       }
       reader.readAsBinaryString(f);
     }
@@ -222,10 +239,12 @@ function Storage(defaults) {
       var id = $('.drive select').val()
         , accessToken = gapi.auth.getToken().access_token
         , url = dsave[id].downloadUrl
-        , e=restoreOpts
         , xhr = new XMLHttpRequest();
 
-      if (dsave===null || !(id in dsave)) { return; }
+      if (dsave===null || !(id in dsave)) { 
+        callback(null); 
+        return;
+      }
 
       xhr.open('GET', url);
       xhr.setRequestHeader('Authorization', 'Bearer ' + accessToken);
@@ -233,27 +252,42 @@ function Storage(defaults) {
       xhr.onload = function() {
         if (xhr.status == 200) {
           callback(new Uint8Array(xhr.response));
+          return;
         } else {
-          callback(null));
+          callback(null);
+          return;
         }
       };
       xhr.onerror = function() {
         callback(null);
+        return;
       };
       xhr.send();
+    }
+
+    function server() {
     }
 
     // condition dialog
     common(options);
     $('.open',$dialog).show(); 
     $('.save',$dialog).hide()
+    $('.null',$dialog).attr('disabled','disabled');
 
-    // file upload / downloadlink
+    // server
+    if (!('server' in options)) {
+      $('.server',$dialog).hide();
+      handler.server = null;
+    } else {
+      $('.server',$dialog).show();
+      handler.server = server;
+    }
+
+    // handlers
     handler.download = null;
-    handler.file = file;
-
-    // button for local save
     handler.local = local;
+    handler.file = file;
+    handler.drive = drive;
 
   }
 
@@ -302,20 +336,23 @@ function Storage(defaults) {
 
   function fillLocalSelect(pattern) {
     var g,$s=$('.local optgroup',$dialog),nofiles=true
-      , regexp = new RegExp(pattern);
+      , regexp = new RegExp(pattern)
+      , prev = $s.parent().val();
 
     $s.empty();
     for (g in lsave) {
       if (lsave.hasOwnProperty(g) && regexp.test(g)) {
+        if(!prev) { prev=g; }
         $s.append($('<option></option>').text(g).attr('value',g));
         n=false;
       }
     }
 
     if (nofiles) {
-      $('.file .hasfiles',$dialog).hide() 
+      $('.local .hasfiles',$dialog).hide();
     } else { 
-      $('.file .hasfiles',$dialog).show() 
+      $('.local .hasfiles',$dialog).show(); 
+      $s.parent().val(prev);
     }
   }
 
@@ -323,11 +360,13 @@ function Storage(defaults) {
     if (dsave===null) { return; }
 
     var g,$s=$('.drive optgroup',$dialog),nofiles=true
-      , regexp = new RegExp(pattern);
+      , regexp = new RegExp(pattern)
+      , prev = $s.parent().val();
 
     $s.empty();
     for (g in dsave) {
       if (dsave.hasOwnProperty(g) && regexp.test(dsave[g].title)) {
+        if(!prev) { prev=g; }
         $s.append($('<option></option>').text(dsave[g].title).attr('value',g));
         nofiles=false;
       }
@@ -337,6 +376,7 @@ function Storage(defaults) {
       $('.drive .hasfiles',$dialog).hide() 
     } else { 
       $('.drive .hasfiles',$dialog).show() 
+      $s.parent().val(prev);
     }
 
     return nofiles;
@@ -366,15 +406,3 @@ function Storage(defaults) {
     open: open
   };
 }
-
-/*
-
-  // get saves from localStorage
-  if (ls) {
-    lsave = JSON.parse(ls.getItem('jszipSaves')||'{}');
-  } else {
-    $('.localsave').hide();
-  }
-
-
-*/
