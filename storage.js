@@ -59,7 +59,7 @@ function Storage(defaults) {
     // local files
     if (ls!==null && options.local) {
       lsave = JSON.parse(ls.getItem(options.local)||'{}');
-      fillLocalSelect();
+      fillLocalSelect(options.pattern||'');
       $('.local',$dialog).show();
     } else {
       $('.local',$dialog).hide();
@@ -67,10 +67,10 @@ function Storage(defaults) {
 
     // drive 
     driveFilesCallback = function() { // in case we have an ongoing login process
-      fillDriveSelect(options.extension || '');
+      fillDriveSelect(options.pattern||'');
     } 
     handler.refresh = retrieveAllFiles; // manual refresh
-    fillDriveSelect(options.extension || ''); // populate select with cached dsave data now
+    fillDriveSelect(options.pattern||''); // populate select with cached dsave data now
 
     // server
     if (!('server' in options)) {
@@ -277,11 +277,13 @@ function Storage(defaults) {
     retrievePageOfFiles(initialRequest, []);
   }
 
-  function fillLocalSelect() {
-    var g,$s=$('.local optgroup',$dialog),nofiles=true;
+  function fillLocalSelect(pattern) {
+    var g,$s=$('.local optgroup',$dialog),nofiles=true
+      , regexp = new RegExp(pattern);
+
     $s.empty();
     for (g in lsave) {
-      if (lsave.hasOwnProperty(g)) {
+      if (lsave.hasOwnProperty(g) && regexp.test(g)) {
         $s.append($('<option></option>').text(g).attr('value',g));
         n=false;
       }
@@ -294,13 +296,15 @@ function Storage(defaults) {
     }
   }
 
-  function fillDriveSelect() {
+  function fillDriveSelect(pattern) {
     if (dsave===null) { return; }
 
-    var g,$s=$('.drive optgroup',$dialog),nofiles=true;
+    var g,$s=$('.drive optgroup',$dialog),nofiles=true
+      , regexp = new RegExp(pattern);
+
     $s.empty();
     for (g in dsave) {
-      if (dsave.hasOwnProperty(g)) {
+      if (dsave.hasOwnProperty(g) && regexp.test(dsave[g].title)) {
         $s.append($('<option></option>').text(dsave[g].title).attr('value',g));
         nofiles=false;
       }
