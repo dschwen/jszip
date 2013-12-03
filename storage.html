@@ -19,12 +19,12 @@
     <div class="local option">
       <h2 class="save">&hellip;on this browser</h2>
       <h2 class="open">&hellip;from this browser</h2>
-      <input class="save" type="text" id="localnewname" placeholder="New File"/>
+      <input class="save" type="text" id="localnewname" placeholder="New file"/>
       <div class="hasfiles">
-        <select id="localoldname">
+        <select>
+          <option value="" class="null save">New file</option>
           <optgroup label="Existing files">
           </optgroup>
-          <option value="" class="null">Other</option>
         </select>
       </div>
       <button>
@@ -39,7 +39,7 @@
         <a download="save.sav" class="downloadlink" href="">Download <span class="basename"></span>&hellip;</a>
       </div>
       <div class="open">
-        <input type="file" id="uploadfile"/>
+        <input type="file"/>
         <button>
           <span class="save">Save</span>
           <span class="open">Restore</span>
@@ -52,10 +52,10 @@
       <div class="signedin">
         <input class="save" type="text" id="drivenewname" placeholder="New File"/>
         <div class="hasfiles">
-          <select id="driveoldname">
+          <select>
           <optgroup label="Existing files">
           </optgroup>
-          <option value="" class="null">Other</option>
+          <option value="" class="null save">New file</option>
           </select>
         </div>
         <button>

@@ -31,7 +31,7 @@ function Storage(defaults) {
   $('.server button',$dialog).on('click', function() { if(handler.server) handler.server() });
 
   // select/input behaviour
-  $('.local select',$dialog).on('click', function() { $('.local input',$dialog).val('')});
+  $('.local select',$dialog).on('change', function() { $('.local input',$dialog).val('')});
   $('.local input',$dialog).on('keydown', function() { $('.local option.null').attr('selected', 'selected'); } );
   
   /* options
@@ -85,10 +85,69 @@ function Storage(defaults) {
       if (name=='') return;
       // save to localstorage
       lsave[name] = btoa(options.data||'');
-      ls.setItem(option.local,JSON.stringify(lsave));
+      ls.setItem(options.local,JSON.stringify(lsave));
       // get back into game
       callback();
       //step();
+    }
+
+    function drive() {
+      var id=null, name, mode = $('#savedialog input[type=radio]:checked').val(), method;
+      if (mode=='drivenew') {
+        name = $('#savedrivenewname').val();
+        if (name=='') return;
+      } else if (mode=='driveold') {
+        id = $('#savedriveoldname').val();
+        if (dsave===null || !(id in dsave)) return;
+        name = dsave[id].title;
+      } else {
+        return;
+      }
+
+      // save to Google Drive
+      var boundary = '-------314159265358979323846'
+        , delimiter = "\r\n--" + boundary + "\r\n"
+        , close_delim = "\r\n--" + boundary + "--"
+        , metadate
+        , base64Data = btoa(saveGame);
+      
+      // specify original metadata and use method 'PUT' to allow update of existing file
+      if (id) {
+        metadata = dsave[id];
+        id='/'+id; // append /id to xhr url causes an update of an existing file
+        method='PUT';
+      } else {
+        metadata = {
+          'title': name,
+          'mimeType': 'application/octet-stream'
+        };
+        id='';
+        method='POST';
+      }
+
+      var multipartRequestBody =
+            delimiter +
+            'Content-Type: application/json\r\n\r\n' +
+            JSON.stringify(metadata) +
+            delimiter +
+            'Content-Type: application/octet-stream\r\n' +
+            'Content-Transfer-Encoding: base64\r\n' +
+            '\r\n' +
+            base64Data +
+            close_delim
+        , request = gapi.client.request({
+            'path': '/upload/drive/v2/files'+id,
+            'method': method, 'alt': 'json',
+            'params': {'uploadType': 'multipart', 'alt': 'json'},
+            'headers': { 'Content-Type': 'multipart/mixed; boundary="' + boundary + '"' },
+            'body': multipartRequestBody
+          });
+
+      request.execute(function(e){
+        // refresh the file lists
+        retrieveAllFiles();
+        callback();
+      });
     }
 
     // condition dialog
@@ -111,15 +170,54 @@ function Storage(defaults) {
     options = options || {};
     augment(options,defaults);
 
-    function callback() {
+    function callback(data) {
       $dialog.fadeOut();
-      if (options.callback) options.callback();
+      if (options.callback) options.callback(data);
+    }
+
+    function local() {
+      var name = $('#restorelocaloldname').val();
+      callback(atob(lsave[name]));
+
+      /*
+      function(data) {
+        var e=restoreOpts, 
+        if (e==null) {
+          throw Error('No z_restore options available!');
+        }
+        FS.createDataFile('/', 'save.sav', data, true, true);
+        restoreOpts=null;
+        zRestore(e.count,e.o0,e.o1,e.o2);
+        FS.unlink('save.sav');
+        step();
+      }
+      */
+    }
+
+    function file() {
+      fl = $('.file input[type=file]',$dialog)[0].files;
+      if (fl.length!==1) { return; }
+      var f=fl[0];
+
+      // instantiate a new FileReader
+      var reader = new FileReader();
+      reader.onload=function(e) {
+        callback(e.target.result);
+      }
+      reader.readAsBinaryString(f);
     }
 
     // condition dialog
     common(options);
     $('.open',$dialog).show(); 
     $('.save',$dialog).hide()
+
+    // file upload / downloadlink
+    handler.download = null;
+    handler.file = ;
+
+    // button for local save
+    handler.local = local;
 
   }
 
@@ -203,95 +301,7 @@ function Storage(defaults) {
     return nofiles;
   }
 
-  function saveLocal() {
-    var name, mode = $('#savedialog input[type=radio]:checked').val();
-    if (mode=='localnew') {
-      name = $('#savelocalnewname').val();
-    } else if (mode=='localold') {
-      name = $('#savelocaloldname').val();
-    } else {
-      return;
-    }
-    // empty name
-    if (name=='') return;
-    // save to localstorage
-    lsave[name] = btoa(saveGame);
-    ls.setItem('jszipSaves',JSON.stringify(lsave));
-    // get back into game
-    $save.fadeOut();
-    step();
-  }
-  function restoreLocal() {
-    var e=restoreOpts, name = $('#restorelocaloldname').val();
-    if (e==null) {
-      throw Error('No z_restore options available!');
-    }
-    FS.createDataFile('/', 'save.sav', atob(lsave[name]), true, true);
-    restoreOpts=null;
-    $restore.fadeOut();
-    zRestore(e.count,e.o0,e.o1,e.o2);
-    step();
-  }
-  function saveDrive() {
-    var id=null, name, mode = $('#savedialog input[type=radio]:checked').val(), method;
-    if (mode=='drivenew') {
-      name = $('#savedrivenewname').val();
-      if (name=='') return;
-    } else if (mode=='driveold') {
-      id = $('#savedriveoldname').val();
-      if (dsave===null || !(id in dsave)) return;
-      name = dsave[id].title;
-    } else {
-      return;
-    }
 
-    // save to Google Drive
-    var boundary = '-------314159265358979323846'
-      , delimiter = "\r\n--" + boundary + "\r\n"
-      , close_delim = "\r\n--" + boundary + "--"
-      , metadate
-      , base64Data = btoa(saveGame);
-    
-    // specify original metadata and use method 'PUT' to allow update of existing file
-    if (id) {
-      metadata = dsave[id];
-      id='/'+id; // append /id to xhr url causes an update of an existing file
-      method='PUT';
-    } else {
-      metadata = {
-        'title': name,
-        'mimeType': 'application/octet-stream'
-      };
-      id='';
-      method='POST';
-    }
-
-    var multipartRequestBody =
-          delimiter +
-          'Content-Type: application/json\r\n\r\n' +
-          JSON.stringify(metadata) +
-          delimiter +
-          'Content-Type: application/octet-stream\r\n' +
-          'Content-Transfer-Encoding: base64\r\n' +
-          '\r\n' +
-          base64Data +
-          close_delim
-      , request = gapi.client.request({
-          'path': '/upload/drive/v2/files'+id,
-          'method': method, 'alt': 'json',
-          'params': {'uploadType': 'multipart', 'alt': 'json'},
-          'headers': { 'Content-Type': 'multipart/mixed; boundary="' + boundary + '"' },
-          'body': multipartRequestBody
-        });
-
-    request.execute(function(e){
-      // refresh the file lists
-      retrieveAllFiles();
-      // get back into game
-      $save.fadeOut();
-      step();
-    });
-  }
   function restoreDrive() {
     var e=restoreOpts, id = $('#restoredriveoldname').val();
     if (e==null) {
@@ -299,22 +309,6 @@ function Storage(defaults) {
     }
     if (dsave===null || !(id in dsave)) { return; }
     downloadDriveFile(id);
-  }
-  function restoreFile(fl) {
-    if (fl.length!=1) { return; }
-    var f=fl[0];
-
-    // instantiate a new FileReader
-    var reader = new FileReader();
-    reader.onload=function(e) {
-      FS.createDataFile('/', 'save.sav', e.target.result, true, true);
-      restoreOpts=null;
-      $restore.fadeOut();
-      zRestore(e.count,e.o0,e.o1,e.o2);
-      FS.unlink('save.sav');
-      step();
-    }
-    reader.readAsBinaryString(f);
   }
   
   function downloadDriveFile(id) {
