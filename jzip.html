@@ -344,10 +344,17 @@
         }
       } else {
         // update status line
-        var l = out.line[out.row-1], i = out.col-1;
-        out.line[out.row-1] = out.line[out.row-1].substr(0,i) + String.fromCharCode(c) + out.line[out.row-1].substr(i+1);
-        out.rowspan[out.row-1].text(out.line[out.row-1]);
-        out.col++;
+        var l = out.line[out.row-1]
+          , r = out.rowspan[out.row-1]
+          , i = out.col-1;
+        if (l && r) {
+          l = l.substr(0,i) + String.fromCharCode(c) + l.substr(i+1);
+          r.text(l);
+          out.line[out.row-1] = l;
+          out.col++;
+        }// else {
+        //  console.log('writing out of status area');
+        //}
       }
     }
   }
@@ -372,7 +379,7 @@
   }
   window['jsSetWindow'] = function(w) {
     var newwin;
-    //console.log('z_set_window(',w,')');
+    console.log('z_set_window(',w,')');
     if (w==='status') {
       newwin=false;
     } else if (w==='text') {
@@ -395,13 +402,13 @@
     console.log('blank_status()');
   }
   window['jsMoveCursor'] = function(row,col) {
-    //console.log("z_set_cursor",out.text,row,col,out.buf);
+    console.log("z_set_cursor",out.text,row,col,out.buf);
     out.row=row;
     out.col=col;
   }
   window['jsSplitWindow'] = function(lines) {
     var cols = out.emptyLine.length;
-    //console.log('z_split_window',lines);
+    console.log('z_split_window',lines);
     $('body').css('padding-top',(lines+1)+'em');
     if (lines) {
       $statw.show().css('height',lines+'em');
@@ -792,10 +799,10 @@
     pattern: '.+\.z.', 
     basename: 'story file',
     server: {
+      'data/woman.z8': '"Inside Woman" (Andy Phillips)',
       'data/curses.z5': '"Curses" (Graham Nelson)',
       'data/minster.z5': '"Christminster (Gareth Rees)',
       'data/anchor.z8': '"Anchorhead" (Michael S. Gentry)',
-      'data/woman.z8': '"Inside Woman" (Andy Phillips)',
       'data/tangle.z5': '"Spider and Web" (Andrew Plotkin)'
     },
     callback: startGame
