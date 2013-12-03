@@ -560,6 +560,7 @@
       local: 'jszipSaves',
       data:  FS.readFile('save.sav'),
       callback: function(success) {
+        step();
       }
     } );
     FS.unlink('save.sav');
