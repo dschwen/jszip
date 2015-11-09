@@ -20,7 +20,7 @@ top of that I added a whole bunch of functions to make playing in the webbrowser
 Example installation
 --------------------
 
-Try it live on [http://frost.schwen.de](http://frost.schwen.de)
+Try it live on [http://frost.schwen.de](http://frost.schwen.de/jszip/jzip.html)
 
 Screenshot
 ----------
