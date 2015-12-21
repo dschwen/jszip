@@ -1,4 +1,4 @@
-jzip.js
+jzip.js [![Build Status](https://travis-ci.org/dschwen/jszip.svg?branch=master)](https://travis-ci.org/dschwen/jszip)
 =======
 
 An interactive fiction Z-Machine interpreter to play Infocom-style text adventures in your browser.
