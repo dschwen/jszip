@@ -1,0 +1,8 @@
+language: cpp
+
+addons:
+  apt:
+    packages:
+      - emscripten
+
+script: make
