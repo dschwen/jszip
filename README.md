@@ -67,3 +67,28 @@ The current location in the game is highlighted with a red aura.
 The current state of the game can be save using the ```save``` command, and a previously saved game can be restored with the ```restore``` command.
 In either case a dialog with save/restore options will pop up. The games are saved in the standard save game format Quetzal, which many Z-Machine
 interpreters can read and write.
+
+Building
+--------
+
+JSZip was developed using an early version of emscripten. Fortunately the emscripten-portable SDK tool allows the installation of arbitrary emscripten versions.
+
+[Download emsdk](https://kripken.github.io/emscripten-site/docs/getting_started/downloads.html) and replace step 2 of the instructions with
+
+```
+# Fetch the latest registry of available tools.
+./emsdk update
+
+# Download and install SDK tools version 1.8.2 (from January 2014).
+./emsdk install emscripten-1.8.2
+
+# Make the "latest" SDK "active" for the current user. (writes ~/.emscripten file)
+./emsdk activate emscripten-1.8.2
+
+# Activate PATH and other environment variables in the current terminal
+source ./emsdk_env.sh
+```
+
+At this point you may need to edit your `~/.emscripten` file and set the `LLVM_ROOT` variable to `'.../emsdk-portable/clang/3.2_64bit/bin/'` (where `...` ist the path the `emsdk-portable` folder is contained in).
+
+Now jszip sould build with `make`. You may notice warnings about missing `z` and `termcap` libraries. Just ignore those for now.
