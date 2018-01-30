@@ -1,16 +1,16 @@
 // map module
-function Map($container) {
+function RoomMap($container) {
 
   var map = {}, id, $view=$('.view',$container)
     , boxw=102, boxh=52 // including border
     , dirs = {
       'n':[0,-1], 's':[0,1], 'w':[-1,0], 'e':[1,0],
-      'ne':[1,-1], 'se':[1,1], 'nw':[-1,-1], 'sw':[-1,1], 
+      'ne':[1,-1], 'se':[1,1], 'nw':[-1,-1], 'sw':[-1,1],
       'u':[0,-4], 'd':[0,4], '0':[0,0]
     }
     , nodes = {
       'n':[0.5,0], 's':[0.5,1], 'w':[0,0.5], 'e':[1,0.5],
-      'ne':[1,0], 'se':[1,1], 'nw':[0,0], 'sw':[0,1], 
+      'ne':[1,0], 'se':[1,1], 'nw':[0,0], 'sw':[0,1],
       'u':[0.2,0], 'd':[0.2,1], '0':[0.5,0.5]
     };
 
@@ -40,18 +40,18 @@ function Map($container) {
   }
   Connection.prototype.update = function() {
     // connection points (2 for straight line, 4 for bezier)
-    var p=[ [ this.room[0].x+boxw*nodes[this.dir[0]][0], this.room[0].y+boxh*nodes[this.dir[0]][1] ], 
+    var p=[ [ this.room[0].x+boxw*nodes[this.dir[0]][0], this.room[0].y+boxh*nodes[this.dir[0]][1] ],
             [],[],
             [ this.room[1].x+boxw*nodes[this.dir[1]][0] ,this.room[1].y+boxh*nodes[this.dir[1]][1] ] ];
     var dx = p[0][0]-p[3][0]
       , dy = p[0][1]-p[3][1]
-      , r; 
+      , r;
 
     r = 0.5*Math.abs( dx*this._dirs[this.dir[0]][0] + dy*this._dirs[this.dir[0]][1] );
-    p[1] = [ p[0][0]+r*this._dirs[this.dir[0]][0], 
+    p[1] = [ p[0][0]+r*this._dirs[this.dir[0]][0],
              p[0][1]+r*this._dirs[this.dir[0]][1] ];
     r = 0.5*Math.abs( dx*this._dirs[this.dir[1]][0] + dy*this._dirs[this.dir[1]][1] );
-    p[2] = [ p[3][0]+r*this._dirs[this.dir[1]][0], 
+    p[2] = [ p[3][0]+r*this._dirs[this.dir[1]][0],
              p[3][1]+r*this._dirs[this.dir[1]][1] ];
 
     // find min/max coordinates for canvas size/position
@@ -65,7 +65,7 @@ function Map($container) {
       if( p[i][1]>max[1] ) max[1]=p[i][1];
     }
     // add gutter
-    min[0]-=5; min[1]-=5; 
+    min[0]-=5; min[1]-=5;
     max[0]+=5; max[1]+=5;
     // scale and position canvas
     this.canvas
@@ -92,12 +92,12 @@ function Map($container) {
   }
   Connection.prototype._nodes = {
     'n':[0.5,0], 's':[0.5,1], 'w':[0,0.5], 'e':[1,0.5],
-    'ne':[1,0], 'se':[1,1], 'nw':[0,0], 'sw':[0,1], 
+    'ne':[1,0], 'se':[1,1], 'nw':[0,0], 'sw':[0,1],
     'u':[0.2,0], 'd':[0.2,1], '0':[0.5,0.5]
   };
   Connection.prototype._dirs = {
     'n':[0,-1], 's':[0,1], 'w':[-1,0], 'e':[1,0],
-    'ne':[0.5,-0.5], 'se':[0.5,0.5], 'nw':[-0.5,-0.5], 'sw':[-0.5,0.5], 
+    'ne':[0.5,-0.5], 'se':[0.5,0.5], 'nw':[-0.5,-0.5], 'sw':[-0.5,0.5],
     'u':[0,-1], 'd':[0,1], '0':[0,0]
   }
 
@@ -224,7 +224,7 @@ function Map($container) {
           var dx = e.pageX-ox, dy = e.pageY-oy;
           viewx = vx+dx;
           viewy = vy+dy;
-          $view.css({ left:viewx+'px', top:viewy+'px' });  
+          $view.css({ left:viewx+'px', top:viewy+'px' });
         });
       })
     .on("mouseup", function(e) {

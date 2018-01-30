@@ -1,13 +1,11 @@
 function Storage(defaults) {
-  var CLIENT_ID = '961409091716-f13l7n45n8u0uvkjqc9vjjddndd40jgs.apps.googleusercontent.com'
-    , SCOPES = 'https://www.googleapis.com/auth/drive'
-    , ls = window.localStorage || null
+  var ls = window.localStorage || null
     , gAPICallback = 'storage_googleAPILoaded'
     , $dialog=$('#storagedialog')
     , dsave = null
     , driveFilesCallback = null
     , lsave = {};
-  
+
   // default options and option fill-in-from-defaults method
   defaults = defaults || {};
   function augment(a,b) {
@@ -44,15 +42,15 @@ function Storage(defaults) {
   $('.local input',$dialog).on('keydown', function() { $('.local option.null').attr('selected', 'selected'); } );
   $('.drive select',$dialog).on('change', function() { $('.drive input',$dialog).val('')});
   $('.drive input',$dialog).on('keydown', function() { $('.drive option.null').attr('selected', 'selected'); } );
-  
+
   /* options
-    
-    { 
+
+    {
       binary: true,
       local: 'keyname',
       server: [ list of server URLs for open only ],
       callback:  function(file)   file=data or true on success, file===false on user abort
-      error:     function(error)   called for save errors 
+      error:     function(error)   called for save errors
               || undefined         (just call callback(false))
       basename: dialog title and default filename
       extension: (list for open)
@@ -73,10 +71,10 @@ function Storage(defaults) {
       $('.local',$dialog).hide();
     }
 
-    // drive 
+    // drive
     driveFilesCallback = function() { // in case we have an ongoing login process
       fillDriveSelect(options.pattern||'');
-    } 
+    }
     handler.refresh = retrieveAllFiles; // manual refresh
     fillDriveSelect(options.pattern||''); // populate select with cached dsave data now
 
@@ -108,7 +106,7 @@ function Storage(defaults) {
     if (typeof data === 'string') {
       stringified = data;
     } else if (typeof data[0] === 'number') {
-      stringified = ''; 
+      stringified = '';
       l = data.length;
       for (i=0;i<l;++i) {
         stringified += String.fromCharCode(data[i]);
@@ -118,7 +116,7 @@ function Storage(defaults) {
       return;
     }
     base64Data = btoa(stringified);
-    
+
     // save in localStorage
     function local() {
       var name = $('.local select',this.$dialog).val() || $('.local input',this.$dialog).val();
@@ -153,8 +151,8 @@ function Storage(defaults) {
           return;
         }
         name = dsave[id].title;
-      } 
-      
+      }
+
       // specify original metadata and use method 'PUT' to allow update of existing file
       if (id) {
         metadata = dsave[id];
@@ -192,21 +190,21 @@ function Storage(defaults) {
         driveFilesCallback = null; // no need to perform any further action
         retrieveAllFiles();
         callback(true,"Save complete.");
-        return; 
+        return;
       });
     }
 
     // condition dialog
     common(options);
-    $('.open',$dialog).hide(); 
-    $('.save',$dialog).show(); 
+    $('.open',$dialog).hide();
+    $('.save',$dialog).show();
     $('.null',$dialog).removeAttr('disabled');
-  
+
     // prepare downloadlink
     handler.download = function(e) {
        $('.file a.downloadlink',$dialog).attr('href','data:application/octet-stream;base64,'+base64Data);
     }
-    
+
     // handlers
     handler.local = local;
     handler.file = null;
@@ -220,7 +218,7 @@ function Storage(defaults) {
 
     function callback(data) {
       $dialog.fadeOut();
-      if (options.binary===false) { 
+      if (options.binary===false) {
         var stringified = '', l = data.length;
         for (i=0;i<l;++i) {
           stringified += String.fromCharCode(data[i]);
@@ -232,17 +230,17 @@ function Storage(defaults) {
 
     function local() {
       var name = $('.local select').val();
-      if (name in lsave) { 
+      if (name in lsave) {
         callback(atob(lsave[name]));
-        return; 
+        return;
       } else {
         callback(null);
-        return; 
+        return;
       }
 
       /*
       function(data) {
-        var e=restoreOpts, 
+        var e=restoreOpts,
         if (e==null) {
           throw Error('No z_restore options available!');
         }
@@ -257,9 +255,9 @@ function Storage(defaults) {
 
     function file() {
       fl = $('.file input[type=file]',$dialog)[0].files;
-      if (fl.length!==1) { 
+      if (fl.length!==1) {
         callback(null);
-        return; 
+        return;
       }
       var f=fl[0];
 
@@ -278,8 +276,8 @@ function Storage(defaults) {
         , url = dsave[id].downloadUrl
         , xhr = new XMLHttpRequest();
 
-      if (dsave===null || !(id in dsave)) { 
-        callback(null); 
+      if (dsave===null || !(id in dsave)) {
+        callback(null);
         return;
       }
 
@@ -315,8 +313,8 @@ function Storage(defaults) {
       var url = $('.server select').val()
         , xhr = new XMLHttpRequest();
 
-      if (!(url in options.server)) { 
-        callback(null); 
+      if (!(url in options.server)) {
+        callback(null);
         return;
       }
       xhr.open('GET', url);
@@ -339,7 +337,7 @@ function Storage(defaults) {
 
     // condition dialog
     common(options);
-    $('.open',$dialog).show(); 
+    $('.open',$dialog).show();
     $('.save',$dialog).hide()
     $('.null',$dialog).attr('disabled','disabled');
 
@@ -361,7 +359,7 @@ function Storage(defaults) {
 
   }
 
-  function handleAuthResult(authResult) {
+  function onSignIn(authResult) {
     if (authResult && !authResult.error) {
       // Access token has been successfully retrieved, requests can be sent to the API.
       $('.signedin',$dialog).show();
@@ -370,10 +368,6 @@ function Storage(defaults) {
       gapi.client.load('drive', 'v2', function() {
         console.log("Google Drive API loaded.");
         retrieveAllFiles();
-      });
-    } else {
-      $('.option.auth button').click(function() {
-        gapi.auth.authorize( {'client_id': CLIENT_ID, 'scope': SCOPES, 'immediate': false}, handleAuthResult);
       });
     }
   }
@@ -420,8 +414,8 @@ function Storage(defaults) {
 
     if (nofiles) {
       $('.local .hasfiles',$dialog).hide();
-    } else { 
-      $('.local .hasfiles',$dialog).show(); 
+    } else {
+      $('.local .hasfiles',$dialog).show();
       $s.parent().val(prev);
     }
   }
@@ -441,11 +435,11 @@ function Storage(defaults) {
         nofiles=false;
       }
     }
-    
-    if (nofiles) { 
-      $('.drive .hasfiles',$dialog).hide() 
-    } else { 
-      $('.drive .hasfiles',$dialog).show() 
+
+    if (nofiles) {
+      $('.drive .hasfiles',$dialog).hide()
+    } else {
+      $('.drive .hasfiles',$dialog).show()
       $s.parent().val(prev);
     }
 
@@ -453,26 +447,27 @@ function Storage(defaults) {
   }
 
 
-  $('.signedout',$dialog).append($('<div id="google_signin_button"></div>'));
-  $('.open',$dialog).hide();
-
-  // load Google API
-  if (!(gAPICallback in window)) {
-    window[gAPICallback] = function(){
-      var options = {
-        'callback' : handleAuthResult,
-        'clientid' : CLIENT_ID,
-        'scope': SCOPES,
-        'cookiepolicy' : 'single_host_origin'
-      };
-
-      gapi.signin.render('google_signin_button', options);
-    }
-    $('<script></script').appendTo('body').attr('src','https://apis.google.com/js/client:platform.js?onload='+gAPICallback);
-  }
+  // $('.signedout',$dialog).append($('<div id="google_signin_button"></div>'));
+  // $('.open',$dialog).hide();
+  //
+  // // load Google API
+  // if (!(gAPICallback in window)) {
+  //   window[gAPICallback] = function(){
+  //     var options = {
+  //       'callback' : handleAuthResult,
+  //       'clientid' : CLIENT_ID,
+  //       'scope': SCOPES,
+  //       'cookiepolicy' : 'single_host_origin'
+  //     };
+  //
+  //     gapi.signin.render('google_signin_button', options);
+  //   }
+  //   $('<script></script').appendTo('body').attr('src','https://apis.google.com/js/client:platform.js?onload='+gAPICallback);
+  // }
 
   return {
     save: save,
-    open: open
+    open: open,
+    onSignIn: onSignIn
   };
 }

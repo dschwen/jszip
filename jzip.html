@@ -4,6 +4,9 @@
 <script src="jzip.js"></script>
 <script src="map.js"></script>
 <script src="storage.js"></script>
+<meta name="google-signin-scope" content="drive">
+<meta name="google-signin-client_id" content="225627196149-0b14oj1dbo6uomb7skb56lu8ocpvb8cn.apps.googleusercontent.com">
+<script src="https://apis.google.com/js/platform.js" async defer></script>
 <link href="jzip.css" rel="stylesheet" type="text/css">
 <link href="storage.css" rel="stylesheet" type="text/css">
 </head>
@@ -88,6 +91,7 @@
       </button>
     </div>
     <div class="signedout">
+      <div class="g-signin2" data-onsuccess="onSignIn" data-theme="dark"></div>
     </div>
   </div>
 </div>
@@ -102,14 +106,14 @@
     , history = ( ls && JSON.parse(ls.getItem('jszipHistory')||'[]') ) || []
     , hindex = history.length
     , autocomplete = {}, sortedWords = []
-    , automap = {}, lastDirection=null, lastRoom=null, map = Map($mapcontainer), playerObject=null
+    , automap = {}, lastDirection=null, lastRoom=null, map = RoomMap($mapcontainer), playerObject=null
     , hmax = 100                        // size of command history
     , moveCount = 0                     // number of commands entered
     , keyCallback = null
     , lineCallback = null
     , CLIENT_ID = '961409091716-f13l7n45n8u0uvkjqc9vjjddndd40jgs.apps.googleusercontent.com'
     , SCOPES = 'https://www.googleapis.com/auth/drive'
-    , ztypes = { 
+    , ztypes = {
       H_SCREEN_ROWS: 32,
       H_SCREEN_COLUMNS: 33,
       H_SCREEN_LEFT: 34,
@@ -123,12 +127,6 @@
       NEXT: 1,
       CHILD: 2
     };
-
-//  automap={"7":{"name":"Wendish's bedroom","n":73,"xy":[730,60]},"9":{"name":"driveway","xy":[340,380]},"12":{"name":"drawing room","w":124,"n":132,"xy":[450,570]},"13":{"name":"courtyard","s":132,"xy":[340,440]},"25":{"name":"Vivien's entrance","w":177,"xy":[290,240]},"31":{"name":"Ian's entrance","s":117,"xy":[290,0]},"32":{"name":"dining room","s":196},"33":{"name":"your bedroom","w":131,"e":70,"xy":[950,180]},"39":{"name":"east hall","e":159,"w":7,"xy":[840,60]},"67":{"name":"west hall","e":150,"w":117,"s":131,"se":131,"xy":[400,60]},"70":{"name":"your entrance","n":179,"s":25,"xy":[1060,180]},"73":{"name":"Wendish's entrance","e":179,"w":228,"xy":[730,0]},"88":{"name":"sitting room","n":196},"117":{"name":"Ian's bedroom","e":67,"n":31,"xy":[290,60]},"124":{"name":"new great hall","u":131,"e":12,"n":132,"w":196,"xy":[340,570]},"126":{"name":"Tamara's bedroom","n":222,"xy":[70,180]},"131":{"name":"gallery","w":148,"e":33,"d":124,"nw":67,"ne":39,"xy":[620,180]},"132":{"name":"foyer","s":124,"e":12,"n":13,"xy":[340,510]},"136":{"name":"old great hall","u":222,"xy":[10,570]},"148":{"name":"Vivien's bedroom","e":131,"xy":[290,180]},"150":{"name":"Hyde's bedroom","w":67,"xy":[510,60]},"151":{"name":"master bedroom","xy":[-40,120]},"159":{"name":"Iris's bedroom","w":39,"xy":[950,60]},"177":{"name":"Tamara's landing","e":25,"w":126,"xy":[180,240]},"179":{"name":"Iris's entrance","s":70,"n":73,"xy":[1060,60]},"196":{"name":"ground-floor corridor","n":32,"s":88,"w":246},"222":{"name":"first-floor corridor","n":136,"w":151,"xy":[70,120]},"224":{"name":"Hyde's entrance","s":150,"xy":[510,0]},"228":{"name":"midpoint","w":224,"xy":[620,0]},"246":{"name":"junction","w":136}};
-
-  //automap = {"7":{"name":"Wendish's bedroom","n":73,"xy":[730,60]},"9":{"name":"driveway","xy":[340,380]},"12":{"name":"drawing room","w":124,"n":132,"xy":[450,570]},"13":{"name":"courtyard","s":132,"xy":[340,440]},"14":{"name":"library landing","s":177,"xy":[180,0],"e":31,"w":146},"25":{"name":"Vivien's entrance","w":177,"xy":[290,240]},"31":{"name":"Ian's entrance","s":117,"xy":[290,0],"w":14,"e":224},"32":{"name":"dining room","s":196},"33":{"name":"your bedroom","w":131,"e":70,"xy":[950,180]},"39":{"name":"east hall","e":159,"w":7,"xy":[840,60]},"54":{"name":"office","xy":[60,120],"w":222},"67":{"name":"west hall","e":150,"w":117,"s":131,"xy":[400,60]},"70":{"name":"your entrance","n":179,"s":25,"xy":[1060,180]},"73":{"name":"Wendish's entrance","e":179,"w":228,"xy":[730,0]},"88":{"name":"sitting room","n":196},"107":{"name":"chapel","n":252,"xy":[-170,-30]},"117":{"name":"Ian's bedroom","e":67,"n":31,"xy":[290,60]},"124":{"name":"new great hall","u":131,"e":12,"n":132,"w":196,"xy":[340,570]},"126":{"name":"Tamara's bedroom","n":222,"xy":[60,200]},"131":{"name":"gallery","w":148,"e":33,"d":124,"nw":67,"ne":39,"xy":[620,180]},"132":{"name":"foyer","s":124,"e":12,"n":13,"xy":[340,510]},"136":{"name":"old great hall","u":222,"xy":[10,570]},"146":{"name":"library","ne":14,"xy":[60,40],"s":222},"148":{"name":"Vivien's bedroom","e":131,"xy":[290,180]},"150":{"name":"Hyde's bedroom","w":67,"xy":[510,60]},"151":{"name":"master bedroom","xy":[-220,120]},"159":{"name":"Iris's bedroom","w":39,"xy":[950,60]},"177":{"name":"Tamara's landing","e":25,"w":126,"xy":[180,240],"n":14},"179":{"name":"Iris's entrance","s":70,"n":73,"xy":[1060,60]},"196":{"name":"ground-floor corridor","n":32,"s":88,"w":246},"222":{"name":"first-floor corridor","n":136,"w":151,"xy":[-60,120],"ne":146,"e":54,"se":126,"s":252},"224":{"name":"Hyde's entrance","s":150,"xy":[510,0],"w":31,"e":228},"228":{"name":"midpoint","w":224,"xy":[620,0],"e":73},"246":{"name":"junction","w":136},"252":{"name":"second-floor corridor","d":222,"xy":[-170,-90],"s":107}};
-
-  //automap = {"2":{"name":"dungeon","e":235,"nw":186},"7":{"name":"Wendish's bedroom","n":73,"xy":[730,60]},"9":{"name":"driveway","xy":[340,380]},"12":{"name":"drawing room","w":124,"n":132,"xy":[450,570]},"13":{"name":"courtyard","s":132,"xy":[340,440]},"14":{"name":"library landing","s":177,"xy":[180,0],"e":31,"w":146,"d":155},"25":{"name":"Vivien's entrance","w":177,"xy":[290,240],"e":70,"n":148},"27":{"name":"Jack's landing","e":40,"xy":[-330,240],"n":151},"30":{"name":"kitchen","w":235,"xy":[100,750],"u":243},"31":{"name":"Ian's entrance","s":117,"xy":[290,0],"w":14,"e":224},"32":{"name":"dining room","s":196,"w":243},"33":{"name":"your bedroom","w":131,"e":70,"xy":[950,180]},"39":{"name":"east hall","e":159,"w":7,"xy":[840,60],"sw":131},"40":{"name":"tower passage","w":27,"e":170,"xy":[-220,240],"u":177},"54":{"name":"office","xy":[60,120],"w":222},"67":{"name":"west hall","e":150,"w":117,"s":131,"xy":[400,60]},"70":{"name":"your entrance","n":179,"s":25,"xy":[1060,180],"w":33},"73":{"name":"Wendish's entrance","e":179,"w":228,"xy":[730,0]},"88":{"name":"sitting room","n":196},"107":{"name":"chapel","n":252,"xy":[-170,-30]},"117":{"name":"Ian's bedroom","e":67,"n":31,"xy":[290,60]},"124":{"name":"new great hall","u":131,"e":12,"n":132,"w":196,"xy":[340,570]},"126":{"name":"Tamara's bedroom","n":222,"xy":[60,200],"se":177},"131":{"name":"gallery","w":148,"e":33,"d":124,"nw":67,"ne":39,"xy":[620,180]},"132":{"name":"foyer","s":124,"e":12,"n":13,"xy":[340,510]},"136":{"name":"old great hall","u":222,"xy":[-150,570]},"146":{"name":"library","ne":14,"xy":[60,40],"s":222},"148":{"name":"Vivien's bedroom","e":131,"xy":[290,180],"s":25},"150":{"name":"Hyde's bedroom","w":67,"xy":[510,60]},"151":{"name":"master bedroom","xy":[-220,120],"e":222,"sw":27},"155":{"name":"dining passage","xy":[10,510],"u":14,"e":243},"159":{"name":"Iris's bedroom","w":39,"xy":[950,60]},"170":{"name":"sitting passage","xy":[-110,240],"w":40},"177":{"name":"Tamara's landing","e":25,"w":126,"xy":[180,240],"n":14,"d":40},"179":{"name":"Iris's entrance","s":70,"n":73,"xy":[1060,60]},"186":{"name":"path","e":2},"196":{"name":"ground-floor corridor","n":32,"s":88,"w":246},"222":{"name":"first-floor corridor","n":136,"w":151,"xy":[-60,120],"ne":146,"e":54,"se":126,"s":252},"224":{"name":"Hyde's entrance","s":150,"xy":[510,0],"w":31,"e":228},"228":{"name":"midpoint","w":224,"xy":[620,0],"e":73},"235":{"name":"basement","w":2,"xy":[-10,750],"e":30},"243":{"name":"backstairs","xy":[120,510],"w":155,"e":32,"d":30},"246":{"name":"junction","w":136},"252":{"name":"second-floor corridor","d":222,"xy":[-170,-90],"s":107}};
 
   // hook key events up to input widget (closure for local variables)
   function setupInput() {
@@ -147,7 +145,7 @@
         range.select();
       }
     }
-  
+
     function getCaretPosition() {
       if (document.selection) {
         var sel = document.selection.createRange ();
@@ -157,7 +155,10 @@
       return $input[0].selectionStart || 0;
     }
 
-    $input.focus().keydown(function(e) { 
+    // make storage module Google auth2 handler available
+    window.onSignIn = storage.onSignIn;
+
+    $input.focus().keydown(function(e) {
       var v = $input.val(), last, pos;
       //console.log(e.keyCode);
       switch(e.keyCode) {
@@ -166,7 +167,7 @@
             // find current last word
             pos = getCaretPosition();
             tBefore = v.substr(0,pos);
-            tAfter = v.substr(pos); 
+            tAfter = v.substr(pos);
             tAfter = tAfter.substr(tAfter.indexOf(' ')+0); // drop everything till first space
             last = tBefore.lastIndexOf(' ')+1
             prefix = tBefore.substr(last);
@@ -184,8 +185,8 @@
             selectRange(tBefore.length,t.length);
             suggestionIndex++;
             if (suggestionIndex == currentSuggestions.length) suggestionIndex=0;
-          } 
-          
+          }
+
           e.preventDefault();
           break;
         case 38: // Cursor up
@@ -202,10 +203,10 @@
           }
           e.preventDefault();
           break;
-        case 13: // Enter 
+        case 13: // Enter
           if (v!=='') {
             hindex = history.length;
-            history[hindex++] = v; 
+            history[hindex++] = v;
             // only keep the last hmax commands in the history
             if (hindex>hmax) {
               history=history.slice(-hmax);
@@ -302,15 +303,15 @@
     $('.menu>.save',$mapcontainer).on('click', function() {
       storage.save( {
         basename: 'automap',
-        pattern: '.+\.zmap', 
+        pattern: '.+\.zmap',
         local: 'jszipMaps',
         data:  JSON.stringify(automap)
       } );
     });
     $('.menu>.open',$mapcontainer).on('click', function() {
-      storage.open( { 
+      storage.open( {
         basename: 'automap',
-        pattern: '.+\.zmap', 
+        pattern: '.+\.zmap',
         local: 'jszipMaps',
         binary: false,
         callback: function(data) {
@@ -328,13 +329,13 @@
   setupMap();
 
   // functions to be called from the c code
-  var out = window['output'] = { 
-      buf:'', 
+  var out = window['output'] = {
+      buf:'',
       col:0, row: 0,
-      rowspan: [], line: [], 
-      emptyLine: '', 
-      text: true, 
-      reverse: false, bold: false, emph: false, fixed: false 
+      rowspan: [], line: [],
+      emptyLine: '',
+      text: true,
+      reverse: false, bold: false, emph: false, fixed: false
     }, argstore = window['argstore']={};
 
   var writeChar = window['jsWriteChar'] = function(c) {
@@ -386,12 +387,12 @@
     }
   }
   window['jsPrintString'] = function(s) {
-    var c,t='',p=s,l=[]; 
+    var c,t='',p=s,l=[];
     while(c=Module.getValue(p++, 'i8')) {
       writeChar(c);
       t+=String.fromCharCode(c);
       l.push(c)
-    } 
+    }
     //if (l.length>0) console.log('printstring',p-s,s,p,t,l);
   }
   window['jsFlushTo'] = function(s) {
@@ -445,14 +446,14 @@
         // make sure length is exactly cols
         if (out.line[i]===undefined) {
           out.line[i]=out.emptyLine;
-        } 
+        }
         out.line[i]=out.line[i].substr(0,cols) + out.emptyLine.substr(out.line[i].length);
         // rebuild span
         out.rowspan[i] = $('<span class="statusrow"></span>').css('top',i+'.5em').text(out.line[i]).attr('id','row'+(i+1)).appendTo($statw);
       }
     } else {
       $statw.hide();
-    } 
+    }
   }
   window['jsSetAttribute'] = function( normal,reverse, bold, emph, fixed ) {
     out.buf += closeAttributes();
@@ -465,7 +466,7 @@
   }
 
   // * For Z3 games this is called when drawing the fixed format status line
-  // * For Z5 and above games this is called as soon at the game returns to the 
+  // * For Z5 and above games this is called as soon at the game returns to the
   //   input prompt. The id is the parent object of the player. The player object
   //   is guessed below
   var registerLocation = window['jsRegisterLocation'] = function(id,name) {
@@ -505,7 +506,7 @@
   // tasks
   function taskGetLine(e) {
     var t=e.timeout,h=null;
-    
+
     // prepare Autocomplete word list
     prepareAutocomplete();
 
@@ -520,16 +521,16 @@
     if(focusInput) $input.focus();
     scrollBottom();
     out.buf='';
-    lineCallback=function(text, nofocus) { 
+    lineCallback=function(text, nofocus) {
       var i,l=text.length;
       focusInput = !nofocus;
-      
+
       // clean up
       $('#inputline').hide();
       $input.blur();
       lineCallback=null;
       if (h) clearTimeout(h);
-      
+
       // set the last direction to guide the automapper
       lastDirection = parseDirection(text);
 
@@ -542,7 +543,7 @@
           .text('> '+text)
           .click(function(e){
             // make previous input clickable for tablets
-            $input.val(text).focus(); 
+            $input.val(text).focus();
           }));
 
       // put text into buffer
@@ -555,12 +556,12 @@
 
     // set up a timeout
     if (t>0) {
-      h = setTimeout(function(){ 
+      h = setTimeout(function(){
         $('#inputline').hide();
         $input.blur();
         lineCallback=null;
-        jsrGetLine(e.cbuf, e.buffer, 0, -1, e.timeout, e.action_routine ); 
-        step(); 
+        jsrGetLine(e.cbuf, e.buffer, 0, -1, e.timeout, e.action_routine );
+        step();
       },t*1000);
     }
   }
@@ -580,17 +581,17 @@
     }
     // set up a timeout
     if (t>0) {
-      h = setTimeout(function(){ 
+      h = setTimeout(function(){
         keyCallback = null;
-        jsrInputCharacter(-1,t); 
-        step(); 
+        jsrInputCharacter(-1,t);
+        step();
       },t*1000);
     }
   }
   function taskSave() {
-    storage.save( { 
+    storage.save( {
       basename: 'savegame',
-      pattern: '.+\.sav', 
+      pattern: '.+\.sav',
       local: 'jszipSaves',
       data:  FS.readFile('save.sav'),
       callback: function(success,msg) {
@@ -603,9 +604,9 @@
     FS.unlink('save.sav');
   }
   function taskRestore(e) {
-    storage.open( { 
+    storage.open( {
       basename: 'savegame',
-      pattern: '.+\.sav', 
+      pattern: '.+\.sav',
       local: 'jszipSaves',
       callback: function(data) {
         if (data===null) {
@@ -620,7 +621,7 @@
     } );
   }
 
-  
+
   // exported functions
   var spinupJS  = Module.cwrap('spinupJS', 'number', ['string'])
     , interpret = Module.cwrap('interpret', 'number')
@@ -634,7 +635,7 @@
 
   window['zLoadVariable'] = Module.cwrap('load_variable', 'number', ['number']);
 
-  // helper functions 
+  // helper functions
   function scrollBottom() {
     $('body').hide().show(0)[0].scrollTop=$('body').height()
   }
@@ -658,7 +659,7 @@
     for (word in autocomplete) {
       if (autocomplete.hasOwnProperty(word)) {
         if (autocomplete[word]+5<moveCount) {
-          delete autocomplete[word]; 
+          delete autocomplete[word];
         } else {
           sortedWords.push(word);
         }
@@ -675,7 +676,7 @@
     var l=sortedWords.length, a, b;
     // get start of slice (first candidate)
     for(a=0; a<l && p>sortedWords[a]; ++a);
-    for(b=a; b<l && sortedWords[b].indexOf(p)==0; ++b); 
+    for(b=a; b<l && sortedWords[b].indexOf(p)==0; ++b);
     return sortedWords.slice(a,b);
   }
   function parseDirection(command) {
@@ -754,11 +755,11 @@
     } catch(e) {
       console.log('Exception:',e);
       switch(e.task||'') {
-        case 'getLine': 
-          taskGetLine(e); 
+        case 'getLine':
+          taskGetLine(e);
           break;
-        case 'inputCharacter': 
-          taskInputCharacter(e); 
+        case 'inputCharacter':
+          taskInputCharacter(e);
           break;
         case 'z_save':
           taskSave();
@@ -804,9 +805,9 @@
       update(w);
     };
     setupScreen();
-    
+
     // at this point the globalvars object is populated
-    
+
     // automapping for >Z3 games is challenging
     if (window['globalvars']['h_type']>3) {
       // search for player object
@@ -826,8 +827,8 @@
     step();
   }
 
-  storage.open( { 
-    pattern: '.+\.z.', 
+  storage.open( {
+    pattern: '.+\.z.',
     basename: 'story file',
     server: {
       'data/woman.z8': '"Inside Woman" (Andy Phillips)',
@@ -840,8 +841,5 @@
   } );
 })();
 </script>
-<script src="https://apis.google.com/js/client.js?onload=googleAPILoaded"></script>
 </body>
 </html>
-
-
