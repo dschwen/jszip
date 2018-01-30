@@ -359,8 +359,8 @@ function Storage(defaults) {
 
   }
 
-  function onSignIn(authResult) {
-    if (authResult && !authResult.error) {
+  function onSignIn(googleUser) {
+    if (googleUser && !googleUser.error) {
       // Access token has been successfully retrieved, requests can be sent to the API.
       $('.signedin',$dialog).show();
       $('.signedout',$dialog).hide();
