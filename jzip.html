@@ -19,6 +19,10 @@
 <span class="builtin" id="score">Score:</span>
 </div>
 
+<div id="touchkey">
+  Touch here to press <b>Space</b>
+</div>
+
 <div id="inputline">
   <input id="input" type="text">
   <span class="prompt"><b>&gt;</b></span>
@@ -569,24 +573,35 @@
   function taskInputCharacter(e) {
     var t=e.timeout,h=null;
 
-    // display readkey bar
+    // display readkey bar (for touch devices)
+    $('#touchkey').show().on('click', function() {
+      //clean up
+      keyCallback = null;
+      if (h) clearTimeout(h);
+
+      // hide readkey bar
+      $('#touchkey').hide().off('click');
+
+      jsrInputCharacter(32, t);
+      step();
+    });
 
     keyCallback = function(c) {
       //clean up
       keyCallback = null;
-      /* hide readkey bar */
       if (h) clearTimeout(h);
 
-      jsrInputCharacter(c,t);
+      // TODO: we might want to check if the t needs to be the remaining time...
+      jsrInputCharacter(c, t);
       step();
     }
     // set up a timeout
-    if (t>0) {
+    if (t > 0) {
       h = setTimeout(function(){
         keyCallback = null;
-        jsrInputCharacter(-1,t);
+        jsrInputCharacter(-1, t);
         step();
-      },t*1000);
+      }, t * 1000);
     }
   }
   function taskSave() {

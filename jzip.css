@@ -39,13 +39,13 @@ canvas {
 }
 
 #mapcontainer {
-  position:fixed; 
-  width: 80%; 
-  height:85%; 
-  top: 7.5%; 
-  margin-right: -80%; 
-  right: 10px; 
-  background-color: white; 
+  position:fixed;
+  width: 80%;
+  height:85%;
+  top: 7.5%;
+  margin-right: -80%;
+  right: 10px;
+  background-color: white;
   border: 1px solid gray;
   border-right: none;
   border-radius: 20px 0 0 20px;
@@ -57,7 +57,7 @@ canvas {
   transition: right 0.5s;
 }
 #mapcontainer>.handle {
-  width: 20px; 
+  width: 20px;
   height: 100%;
   border-radius: 20px 0 0 20px;
   position: absolute;
@@ -177,4 +177,15 @@ span.statusrow {
   left:0;
   font-family: monospace;
   white-space: pre;
+}
+#touchkey {
+  margin: 0 auto;
+  padding: 1em;
+  background-color: white;
+  border: 1px solid black;
+  top: 1em;
+  left: 0; right: 0;
+  position: absolute;
+  width: 15em;
+  display: none;
 }
