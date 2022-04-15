@@ -1,14 +1,14 @@
 
-/* $Id: osdepend.c,v 1.2 2000/05/25 22:28:56 jholder Exp $   
+/* $Id: osdepend.c,v 1.2 2000/05/25 22:28:56 jholder Exp $
  * --------------------------------------------------------------------
- * see doc/License.txt for License Information   
+ * see doc/License.txt for License Information
  * --------------------------------------------------------------------
- * 
- * File name: $Id: osdepend.c,v 1.2 2000/05/25 22:28:56 jholder Exp $  
- *   
- * Description:    
- *    
- * Modification history:      
+ *
+ * File name: $Id: osdepend.c,v 1.2 2000/05/25 22:28:56 jholder Exp $
+ *
+ * Description:
+ *
+ * Modification history:
  * $Log: osdepend.c,v $
  * Revision 1.2  2000/05/25 22:28:56  jholder
  * changes routine names to reflect zmachine opcode names per spec 1.0
@@ -34,6 +34,7 @@
 
 #include "ztypes.h"
 #include "jzexe.h"
+#include <unistd.h>
 
 /* File names will be O/S dependent */
 
@@ -55,7 +56,7 @@
 /* Define stuff for stricter Z-code error checking, for the generic
  * Unix/DOS/etc terminal-window interface. Feel free to change the way
  * player prefs are specified, or replace report_zstrict_error()
- * completely if you want to change the way errors are reported. 
+ * completely if you want to change the way errors are reported.
  */
 
 /* There are four error reporting modes: never report errors;
@@ -66,7 +67,7 @@
  * different default by changing the definition of
  * STRICTZ_DEFAULT_REPORT_MODE. In any case, the player can
  * specify a report mode on the command line by typing "-s 0"
- * through "-s 3". 
+ * through "-s 3".
  */
 
 #define STRICTZ_REPORT_NEVER  (0)
@@ -93,9 +94,9 @@ extern ZINT16 default_fg, default_bg;
 #endif /* !defined(AMIGA) */
 
 
-#if defined OS2 || defined __MSDOS__ 
-int iPalette;                   
-#endif 
+#if defined OS2 || defined __MSDOS__
+int iPalette;
+#endif
 
 
 
@@ -135,29 +136,29 @@ void process_arguments( int argc, char *argv[] )
    hist_buf_size = 1024;
    bigscreen = 0;
 
-#ifdef STRICTZ                  
-#if defined OS2 || defined __MSDOS__ 
-#define GETOPT_SET "gbomvzhy?l:c:k:r:t:s:" 
-#elif defined TURBOC            
-#define GETOPT_SET   "bmvzhy?l:c:k:r:t:s:" 
-#elif defined HARD_COLORS       
-#define GETOPT_SET    "mvzhy?l:c:k:r:t:s:f:b:" 
-#else 
-#define GETOPT_SET    "mvzhy?l:c:k:r:t:s:" 
-#endif 
-#else 
-#if defined OS2 || defined __MSDOS__ 
-#define GETOPT_SET "gbomvzhy?l:c:k:r:t:" 
-#elif defined TURBOC            
-#define GETOPT_SET   "bmvzhy?l:c:k:r:t:" 
-#elif defined HARD_COLORS       
-#define GETOPT_SET    "mvzhy?l:c:k:r:t:f:b:" 
-#else 
-#define GETOPT_SET    "mvzhy?l:c:k:r:t:" 
-#endif 
-#endif 
+#ifdef STRICTZ
+#if defined OS2 || defined __MSDOS__
+#define GETOPT_SET "gbomvzhy?l:c:k:r:t:s:"
+#elif defined TURBOC
+#define GETOPT_SET   "bmvzhy?l:c:k:r:t:s:"
+#elif defined HARD_COLORS
+#define GETOPT_SET    "mvzhy?l:c:k:r:t:s:f:b:"
+#else
+#define GETOPT_SET    "mvzhy?l:c:k:r:t:s:"
+#endif
+#else
+#if defined OS2 || defined __MSDOS__
+#define GETOPT_SET "gbomvzhy?l:c:k:r:t:"
+#elif defined TURBOC
+#define GETOPT_SET   "bmvzhy?l:c:k:r:t:"
+#elif defined HARD_COLORS
+#define GETOPT_SET    "mvzhy?l:c:k:r:t:f:b:"
+#else
+#define GETOPT_SET    "mvzhy?l:c:k:r:t:"
+#endif
+#endif
    while ( ( c = getopt( argc, argv, GETOPT_SET ) ) != EOF )
-   {                            
+   {
       switch ( c )
       {
          case 'l':             /* lines */
@@ -179,13 +180,13 @@ void process_arguments( int argc, char *argv[] )
                hist_buf_size = 16384;
             break;
          case 'y':             /* Tandy */
-            fTandy = 1;         
-            break;              
-#if defined OS2 || defined __MSDOS__ 
+            fTandy = 1;
+            break;
+#if defined OS2 || defined __MSDOS__
          case 'g':             /* Beyond Zork or other games using IBM graphics */
-            fIBMGraphics = 1;   
-            break;              
-#endif 
+            fIBMGraphics = 1;
+            break;
+#endif
          case 'v':             /* version information */
 
             fprintf( stdout, "\nJZIP - An Infocom Z-code Interpreter Program \n" );
@@ -219,26 +220,26 @@ void process_arguments( int argc, char *argv[] )
             default_bg = atoi( optarg );
             break;
 #endif
-#if defined OS2 || defined __MSDOS__ 
+#if defined OS2 || defined __MSDOS__
          case 'm':             /* monochrome */
-            iPalette = 2;       
-            break;              
+            iPalette = 2;
+            break;
          case 'b':             /* black-and-white */
-            iPalette = 1;       
-            break;              
+            iPalette = 1;
+            break;
          case 'o':             /* color */
-            iPalette = 0;       
-            break;              
-#else 
+            iPalette = 0;
+            break;
+#else
          case 'm':
             monochrome = 1;
             break;
-#endif 
-#if defined TURBOC              
+#endif
+#if defined TURBOC
          case 'b':
             bigscreen = 1;
             break;
-#endif 
+#endif
 #ifdef STRICTZ
          case 's':             /* strictz reporting mode */
             strictz_report_mode = atoi( optarg );
@@ -276,9 +277,9 @@ void process_arguments( int argc, char *argv[] )
    {
 
       if ( STANDALONE_FLAG )
-         fprintf( stdout, "usage: %s [options...]\n", argv[0] ); 
+         fprintf( stdout, "usage: %s [options...]\n", argv[0] );
       else
-         fprintf( stdout, "usage: %s [options...] story-file\n", argv[0] ); 
+         fprintf( stdout, "usage: %s [options...] story-file\n", argv[0] );
 
       fprintf( stdout, "JZIP - an Infocom story file interpreter.\n" );
       fprintf( stdout, "      Version %s by %s.\n", JZIPVER, JZIPAUTHOR );
@@ -291,7 +292,7 @@ void process_arguments( int argc, char *argv[] )
       fprintf( stdout, "\t-t n text top margin (default = %d)\n", DEFAULT_TOP_MARGIN );
       fprintf( stdout, "\t-k n set the size of the command history buffer to n bytes\n" );
       fprintf( stdout, "\t     (Default is 1024 bytes.  Maximum is 16384 bytes.)\n" );
-      fprintf( stdout, "\t-y   turn on the legendary \"Tandy\" bit\n" ); 
+      fprintf( stdout, "\t-y   turn on the legendary \"Tandy\" bit\n" );
       fprintf( stdout, "\t-v   display version information\n" );
       fprintf( stdout, "\t-h   display this usage information\n" );
 
@@ -300,14 +301,14 @@ void process_arguments( int argc, char *argv[] )
       fprintf( stdout, "\t-b n background color (-1 to ignore bg color (try it on an Eterm))\n" );
       fprintf( stdout, "\t     Black=0 Red=1 Green=2 Yellow=3 Blue=4 Magenta=5 Cyan=6 White=7\n" );
 #endif
-      fprintf( stdout, "\t-m   force monochrome mode\n" ); 
-#if defined __MSDOS__ || defined OS2 
-      fprintf( stdout, "\t-b   force black-and-white mode\n" ); 
-      fprintf( stdout, "\t-o   force color mode\n" ); 
-      fprintf( stdout, "\t-g   use \"Beyond Zork\" graphics, rather than standard international\n" ); 
-#elif defined TURBOC            
-      fprintf( stdout, "\t-b   run in 43/50 line EGA/VGA mode\n" ); 
-#endif 
+      fprintf( stdout, "\t-m   force monochrome mode\n" );
+#if defined __MSDOS__ || defined OS2
+      fprintf( stdout, "\t-b   force black-and-white mode\n" );
+      fprintf( stdout, "\t-o   force color mode\n" );
+      fprintf( stdout, "\t-g   use \"Beyond Zork\" graphics, rather than standard international\n" );
+#elif defined TURBOC
+      fprintf( stdout, "\t-b   run in 43/50 line EGA/VGA mode\n" );
+#endif
 
 #ifdef STRICTZ
       fprintf( stdout, "\t-s n stricter error checking (default = %d) (0: none; 1: report 1st\n",
@@ -497,9 +498,9 @@ int get_file_name( char *file_name, char *default_name, int flag )
    {
       FILE *tfp;
 
-#if defined BUFFER_FILES        
-      char tfpbuffer[BUFSIZ];   
-#endif 
+#if defined BUFFER_FILES
+      char tfpbuffer[BUFSIZ];
+#endif
       char c;
 
       /* Try to access the file */
@@ -509,9 +510,9 @@ int get_file_name( char *file_name, char *default_name, int flag )
       {
          /* If it succeeded then prompt to overwrite */
 
-#if defined BUFFER_FILES        
-         setbuf( tfp, tfpbuffer ); 
-#endif 
+#if defined BUFFER_FILES
+         setbuf( tfp, tfpbuffer );
+#endif
 
          output_line( "You are about to write over an existing file." );
          output_string( "Proceed? (Y/N) " );
@@ -557,7 +558,7 @@ int get_file_name( char *file_name, char *default_name, int flag )
 void fatal( const char *s )
 {
 #ifdef EMSCRIPTEN
-asm("console.log('fatal error!')"::);
+   EM_ASM_( console.log('fatal error!'); );
 #else
    reset_screen(  );
    fprintf( stderr, "\nFatal error: %s (PC = 0x%08lX)\n", s, pc );
@@ -699,13 +700,13 @@ int print_status( int argc, char *argv[] )
 
 void set_font( int font_type )
 {
-  asm("console.log('set_font()')"::);
+   EM_ASM_( console.log('set_font()'); );
    UNUSEDVAR( font_type );
 }                               /* set_font */
 
 #endif /* !defined(AMIGA) */
 
-#if !defined MSDOS && !defined OS2 && !defined AMIGA && !defined HARD_COLORS && !defined ATARIST 
+#if !defined MSDOS && !defined OS2 && !defined AMIGA && !defined HARD_COLORS && !defined ATARIST
 
 /*
  * set_colours
@@ -719,9 +720,9 @@ void set_colours( zword_t foreground, zword_t background )
 
 }                               /* set_colours */
 
-#endif  /* !defined MSDOS && !defined OS2 && !defined AMIGA !defined HARD_COLORS && !defined ATARIST */ 
+#endif  /* !defined MSDOS && !defined OS2 && !defined AMIGA !defined HARD_COLORS && !defined ATARIST */
 
-#if !defined VMS && !defined MSDOS && !defined OS2 && !defined POSIX 
+#if !defined VMS && !defined MSDOS && !defined OS2 && !defined POSIX
 
 /*
  * codes_to_text
@@ -770,4 +771,4 @@ int codes_to_text( int c, char *s )
    return 1;
 }                               /* codes_to_text */
 
-#endif  /* !defined VMS && !defined MSDOS && !defined OS2 && !defined POSIX */ 
+#endif  /* !defined VMS && !defined MSDOS && !defined OS2 && !defined POSIX */

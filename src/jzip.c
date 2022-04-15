@@ -1,14 +1,14 @@
 
-/* $Id: jzip.c,v 1.3 2000/10/04 23:07:57 jholder Exp $   
+/* $Id: jzip.c,v 1.3 2000/10/04 23:07:57 jholder Exp $
  * --------------------------------------------------------------------
- * see doc/License.txt for License Information   
+ * see doc/License.txt for License Information
  * --------------------------------------------------------------------
- * 
- * File name: $Id: jzip.c,v 1.3 2000/10/04 23:07:57 jholder Exp $  
- *   
- * Description:    
- *    
- * Modification history:      
+ *
+ * File name: $Id: jzip.c,v 1.3 2000/10/04 23:07:57 jholder Exp $
+ *
+ * Description:
+ *
+ * Modification history:
  * $Log: jzip.c,v $
  * Revision 1.3  2000/10/04 23:07:57  jholder
  * fixed redirect problem with isolatin1 range chars
@@ -27,7 +27,7 @@
 /*
  * jzip.c
  *
- * Z code interpreter main routine. 
+ * Z code interpreter main routine.
  *
  * Revisions list:
  * Mark Howell 10-Mar-1993 V2.0    howell_ma@movies.enet.dec.com
@@ -35,8 +35,8 @@
  * John Holder 22-Nov-1995 V2.0.1g j-holder@home.com
  * John Holder 06-Feb-1998 V2.0.2  j-holder@home.com Zstrict & Quetzal
  *
- * If you have problems with this interpreter and/or fix bugs in it, 
- * please notify John Holder (j-holder@home.com) and he will add your 
+ * If you have problems with this interpreter and/or fix bugs in it,
+ * please notify John Holder (j-holder@home.com) and he will add your
  * fix to the official JZIP distribution.
  */
 
@@ -54,7 +54,7 @@ static void configure( zbyte_t, zbyte_t );
  */
 
 #ifdef EMSCRIPTEN
-int spinupJS( char *fname ) 
+int spinupJS( char *fname )
 {
    open_story( fname );
 
@@ -77,7 +77,7 @@ int main( int argc, char *argv[] )
    interpreter_status = 1;
    return 0;
 }
-int cleanupJS(int dummy) 
+int cleanupJS(int dummy)
 {
 #else
    ( void ) interpret(  );
@@ -183,9 +183,11 @@ static void configure( zbyte_t min_version, zbyte_t max_version )
    datap = NULL;
 
 #ifdef EMSCRIPTEN
-   asm( "window['globalvars']['h_type']=%0;" ::"r"(h_type) );
-   asm( "window['globalvars']['h_config']=%0;" ::"r"(h_config) );
-   asm( "window['globalvars']['h_version']=%0;" ::"r"(h_version) );
-   asm( "window['globalvars']['h_checksum']=%0;" ::"r"(h_checksum) );
+   EM_ASM_({
+     window['globalvars']['h_type'] = $0;
+     window['globalvars']['h_config'] = $1;
+     window['globalvars']['h_version'] = $2;
+     window['globalvars']['h_checksum'] = $3;
+   }, h_type, h_config, h_version, h_checksum);
 #endif
 }                               /* configure */

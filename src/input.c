@@ -1,14 +1,14 @@
 
-/* $Id: input.c,v 1.3 2000/07/05 15:20:34 jholder Exp $   
+/* $Id: input.c,v 1.3 2000/07/05 15:20:34 jholder Exp $
  * --------------------------------------------------------------------
- * see doc/License.txt for License Information   
+ * see doc/License.txt for License Information
  * --------------------------------------------------------------------
- * 
- * File name: $Id: input.c,v 1.3 2000/07/05 15:20:34 jholder Exp $  
- *   
- * Description:    
- *    
- * Modification history:      
+ *
+ * File name: $Id: input.c,v 1.3 2000/07/05 15:20:34 jholder Exp $
+ *
+ * Description:
+ *
+ * Modification history:
  * $Log: input.c,v $
  * Revision 1.3  2000/07/05 15:20:34  jholder
  * Updated code to remove warnings.
@@ -30,10 +30,6 @@
  * Input routines
  *
  */
-
-#ifdef EMSCRIPTEN
-#include <emscripten.h>
-#endif
 
 #include "ztypes.h"
 
@@ -101,8 +97,10 @@ void z_read_char( int argc, zword_t * argv )
           * call the timeout action routine. If the return status from the
           * timeout routine was 0 then try to read a character again */
 #ifdef EMSCRIPTEN
-         asm("window['argstore']['a0']=%0" : : "r"(arg_list[0]) );
-         asm("throw { task: 'inputCharacter', timeout: %0 }" :: "r"(( int ) argv[1]) );
+         EM_ASM_({
+           window['argstore']['a0'] = $0;
+           throw ({ task: 'inputCharacter', timeout: $1 });
+         }, arg_list[0], (int)argv[1]);
       }
    }
 
@@ -120,10 +118,14 @@ void z_read_char( int argc, zword_t * argv )
 void jsrInputCharacter(int c, int timeout)
 {
   zword_t arg_list[2] = {0,0};
-  asm("window['argstore']['a0']" : "=r"(arg_list[0]) : );
+  EM_ASM_({
+    window['argstore']['a0'] = $0;
+  }, arg_list[0]);
 
   if( c==-1 && z_call( 1, arg_list, ASYNC ) == 0 ) {
-    asm("throw { task: 'inputCharacter', timeout: %0 }" :: "r"(timeout));
+    EM_ASM_({
+      throw ({ task: 'inputCharacter', timeout: $0 });
+    }, timeout);
   }
 #endif
          /* Fail call if input timed out */
@@ -188,7 +190,10 @@ void z_sread_aread( int argc, zword_t * argv )
    /* Read the line then script and record it */
 #ifdef EMSCRIPTEN
    // save argv and in_size over to next block
-   asm("window['argstore']['argv']=%0; window['argstore']['in_size']=%1" : : "r"(argv),"r"(in_size) );
+   EM_ASM_({
+     window['argstore']['argv'] = $0;
+     window['argstore']['in_size'] = $1;
+   }, argv, in_size);
 #endif
    terminator = get_line( cbuf, argv[2], argv[3] );
 #ifdef EMSCRIPTEN
@@ -197,10 +202,12 @@ void jsrZSReadARead(int terminator, char *cbuf) {
   char *buffer;
   int out_size,i;
   // recover argv and in_size from previous block
-  zword_t *argv; 
+  zword_t *argv;
   int in_size;
-  asm("window['argstore']['argv']" : "=r"(argv) : );
-  asm("window['argstore']['in_size']" : "=r"(in_size) : );
+  EM_ASM_({
+    window['argstore']['argv'] = $0;
+    window['argstore']['in_size'] = $1;
+  }, argv, in_size);
 #endif
    script_line( ( h_type > V4 ) ? &cbuf[2] : &cbuf[1] );
    record_line( ( h_type > V4 ) ? &cbuf[2] : &cbuf[1] );
@@ -288,12 +295,16 @@ int get_line( char *cbuf, zword_t timeout, zword_t action_routine )
        * timeout routine was 0 then try to read the line again */
 
 #ifdef EMSCRIPTEN
-      asm( "window['argstore']['arg_list']=[%0,%1]" : : "r"(arg_list[0]),"r"(arg_list[1]) );
+      EM_ASM_({
+        window['argstore']['arg_list'] = ([$0,$1]);
+      }, arg_list[0], arg_list[1]);
       /*if ( load_variable( 16 ) != 0 ) {
         z_print_obj( load_variable( 16 ) );
         asm("window['jsRegisterLocation'](%0)"::"r"(load_variable( 16 )) );
       }*/
-      asm( "throw { task:'getLine', cbuf: %0, buffer: %1, timeout: %2, action_routine: %3 };" : : "r"(cbuf),"r"(buffer),"r"(timeout),"r"(action_routine) );
+      EM_ASM_({
+        throw ({ task:'getLine', cbuf: $0, buffer: $1, timeout: $2, action_routine: $3 });
+      }, cbuf, buffer, timeout, action_routine);
    }
    return 0; // please compiler, never reached
 }
@@ -318,14 +329,18 @@ int get_line( char *cbuf, zword_t timeout, zword_t action_routine )
 void jsrGetLine(char* cbuf, char* buffer, int read_size, int c, int timeout, int action_routine ) {
   int status = 0;
   zword_t arg_list[2];
-  asm( "window['argstore']['arg_list'][0]" : "=r"(arg_list[0]) : );
-  asm( "window['argstore']['arg_list'][1]" : "=r"(arg_list[1]) : );
+  EM_ASM_({
+    window['argstore']['arg_list'][0] = $0;
+    window['argstore']['arg_list'][1] = $1;
+  }, arg_list[0], arg_list[1]);
   if( c == -1 && ( status = z_call( 1, arg_list, ASYNC ) ) == 0 ) {
       /*if ( load_variable( 16 ) != 0 ) {
         z_print_obj( load_variable( 16 ) );
         asm("window['jsRegisterLocation'](%0)"::"r"(load_variable( 16 )) );
       }*/
-      asm( "throw { task:'getLine', cbuf: %0, buffer: %1, timeout: %2, action_routine: %3 };" : : "r"(cbuf),"r"(buffer),"r"(timeout),"r"(action_routine) );
+      EM_ASM({
+        throw ({ task:'getLine', cbuf: $0, buffer: $1, timeout: $2, action_routine: $3 });
+      }, cbuf, buffer, timeout, action_routine);
   }
   if(status) read_size=0;
 #endif
@@ -598,7 +613,7 @@ static zword_t find_word( int len, const char *cp, long chop )
          /* If word matches then return dictionary offset */
 
          if ( ( status = word[0] - ( ZINT16 ) get_word( offset + 0 ) ) == 0                &&
-              ( status = word[1] - ( ZINT16 ) get_word( offset + 2 ) ) == 0                && 
+              ( status = word[1] - ( ZINT16 ) get_word( offset + 2 ) ) == 0                &&
               ( h_type < V4 || ( status = word[2] - ( ZINT16 ) get_word( offset + 4 ) ) == 0 ) )
             return ( ( zword_t ) offset );
 
@@ -637,7 +652,7 @@ static zword_t find_word( int len, const char *cp, long chop )
          /* If word matches then return dictionary offset */
 
          if ( ( status = word[0] - ( ZINT16 ) get_word( offset + 0 ) ) == 0                &&
-              ( status = word[1] - ( ZINT16 ) get_word( offset + 2 ) ) == 0                && 
+              ( status = word[1] - ( ZINT16 ) get_word( offset + 2 ) ) == 0                &&
               ( h_type < V4 || ( status = word[2] - ( ZINT16 ) get_word( offset + 4 ) ) == 0 ) )
             return ( ( zword_t ) offset );
       }

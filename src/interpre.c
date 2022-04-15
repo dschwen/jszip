@@ -1,14 +1,14 @@
 
-/* $Id: interpre.c,v 1.3 2000/07/05 15:20:34 jholder Exp $   
+/* $Id: interpre.c,v 1.3 2000/07/05 15:20:34 jholder Exp $
  * --------------------------------------------------------------------
- * see doc/License.txt for License Information   
+ * see doc/License.txt for License Information
  * --------------------------------------------------------------------
- * 
- * File name: $Id: interpre.c,v 1.3 2000/07/05 15:20:34 jholder Exp $  
- *   
- * Description:    
- *    
- * Modification history:      
+ *
+ * File name: $Id: interpre.c,v 1.3 2000/07/05 15:20:34 jholder Exp $
+ *
+ * Description:
+ *
+ * Modification history:
  * $Log: interpre.c,v $
  * Revision 1.3  2000/07/05 15:20:34  jholder
  * Updated code to remove warnings.
@@ -125,13 +125,15 @@ int interpret(  )
                case 0x00:
                  z_save( count, operand[0], operand[1], operand[2] );
 #ifdef EMSCRIPTEN
-                 asm( "throw { task:'z_save' }" :: );
+                 EM_ASM_( throw { task:'z_save' }; );
 #endif
                   break;
                case 0x01:
-                 asm( "console.log('z_save')" :: );
+                 EM_ASM_( console.log('z_save'); );
 #ifdef EMSCRIPTEN
-                 asm( "throw { task:'z_restore', count:%0, o0:%1, o1:%2, o2:%3 }" :: "r"(count), "r"(operand[0]), "r"(operand[1]), "r"(operand[2]) );
+                 EM_ASM_({
+                   throw ({ task:'z_restore', count:$0, o0:$1, o1:$2, o2:$3 });
+                 }, count, operand[0], operand[1], operand[2]);
 #else
                   z_restore( count, operand[0], operand[1], operand[2] );
 #endif
@@ -448,12 +450,14 @@ int interpret(  )
                case 0x05:
                   z_save( 0, 0, 0, 0 );
 #ifdef EMSCRIPTEN
-                 asm( "throw { task:'z_save' }" :: );
+                 EM_ASM_( throw { task:'z_save' }; );
 #endif
                   break;
                case 0x06:
 #ifdef EMSCRIPTEN
-                 asm( "throw { task:'z_restore', count:0, o0:0, o1:0, o2:0 }" :: );
+                 EM_ASM_({
+                   throw ({ task:'z_restore', count:0, o0:0, o1:0, o2:0 });
+                 });
 #else
                   z_restore( 0, 0, 0, 0 );
 #endif

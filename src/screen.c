@@ -1,14 +1,14 @@
 
-/* $Id: screen.c,v 1.3 2000/07/05 15:20:34 jholder Exp $   
+/* $Id: screen.c,v 1.3 2000/07/05 15:20:34 jholder Exp $
  * --------------------------------------------------------------------
- * see doc/License.txt for License Information   
+ * see doc/License.txt for License Information
  * --------------------------------------------------------------------
- * 
- * File name: $Id: screen.c,v 1.3 2000/07/05 15:20:34 jholder Exp $  
- *   
- * Description:    
- *    
- * Modification history:      
+ *
+ * File name: $Id: screen.c,v 1.3 2000/07/05 15:20:34 jholder Exp $
+ *
+ * Description:
+ *
+ * Modification history:
  * $Log: screen.c,v $
  * Revision 1.3  2000/07/05 15:20:34  jholder
  * Updated code to remove warnings.
@@ -119,7 +119,9 @@ void z_split_window( zword_t lines )
    if ( h_type < V4 )
       lines++;
 #ifdef EMSCRIPTEN
-  asm("window['jsSplitWindow'](%0)" : : "r"(lines) );
+  EM_ASM_({
+    window['jsSplitWindow']($0);
+  }, lines);
 #else
    if ( lines )
    {
@@ -280,14 +282,16 @@ void z_show_status( void )
    pad_line( 1 );
    status_part[count] = &status_line[status_pos];
 #ifdef EMSCRIPTEN
-   asm("window['jsFlushTo']('DUMMY')"::);
+   EM_ASM_( window['jsFlushTo']('DUMMY'); );
 #endif
 
    if ( load_variable( 16 ) != 0 ) {
       z_print_obj( load_variable( 16 ) );
 #ifdef EMSCRIPTEN
-asm("window['jsRegisterLocation'](%0)"::"r"(load_variable( 16 )) );
-      asm("window['jsFlushTo']('row1')"::);
+    EM_ASM_({
+      window['jsRegisterLocation']($0);
+      window['jsFlushTo']('row1');
+    }, load_variable(16));
 #endif
    }
 
@@ -306,7 +310,7 @@ asm("window['jsRegisterLocation'](%0)"::"r"(load_variable( 16 )) );
       write_string( " Time: " );
       print_time( load_variable( 17 ), load_variable( 18 ) );
 #ifdef EMSCRIPTEN
-      asm("window['jsFlushTo']('time')"::);
+      EM_ASM_( window['jsFlushTo']('time'); );
 #endif
       end_of_string[count++] = status_pos;
       status_line[status_pos++] = '\0';
@@ -322,7 +326,7 @@ asm("window['jsRegisterLocation'](%0)"::"r"(load_variable( 16 )) );
       write_string( " Score: " );
       z_print_num( load_variable( 17 ) );
 #ifdef EMSCRIPTEN
-      asm("window['jsFlushTo']('score')"::);
+      EM_ASM_( window['jsFlushTo']('score'); );
 #endif
       end_of_string[count++] = status_pos;
       status_line[status_pos++] = '\0';
@@ -332,7 +336,7 @@ asm("window['jsRegisterLocation'](%0)"::"r"(load_variable( 16 )) );
       write_string( " Moves: " );
       z_print_num( load_variable( 18 ) );
 #ifdef EMSCRIPTEN
-      asm("window['jsFlushTo']('moves')"::);
+      EM_ASM_( window['jsFlushTo']('moves'); );
 #endif
       end_of_string[count++] = status_pos;
       status_line[status_pos++] = '\0';
@@ -370,7 +374,7 @@ asm("window['jsRegisterLocation'](%0)"::"r"(load_variable( 16 )) );
 void blank_status_line( void )
 {
 #ifdef EMSCRIPTEN
-  asm("window['jsBlankStatus']()" : : );
+  EM_ASM_( window['jsBlankStatus'](); );
 #else
 
    /* Move the cursor to the top line of the status window, set the reverse
@@ -409,7 +413,9 @@ void blank_status_line( void )
 void output_string( const char *s )
 {
 #ifdef EMSCRIPTEN
-  asm("window['jsPrintString'](%0)" : : "r"(s) );
+  EM_ASM_({
+    window['jsPrintString']($0);
+  }, s);
 #else
    while ( *s )
       output_char( *s++ );
@@ -472,8 +478,8 @@ void output_new_line( void )
 
          scroll_line(  );
 
-         /* See if we have filled the screen. The spare line is for 
-          * the [MORE] message 
+         /* See if we have filled the screen. The spare line is for
+          * the [MORE] message
           */
 
          if ( ++lines_written >= ( ( screen_rows - top_margin ) - status_size - 1 ) )

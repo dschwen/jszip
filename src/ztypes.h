@@ -36,6 +36,7 @@
 
 #ifdef EMSCRIPTEN
 #define LOUSY_RANDOM
+#include <emscripten.h>
 #endif
 
 #if !defined(__ZTYPES_INCLUDED)
@@ -514,8 +515,8 @@ extern int font;
 extern int status_active;
 extern int status_size;
 
-extern char fTandy;             
-extern char fIBMGraphics;       
+extern char fTandy;
+extern char fIBMGraphics;
 
 extern int lines_written;
 extern int status_pos;

@@ -1,14 +1,14 @@
 
-/* $Id: text.c,v 1.5 2000/10/10 14:46:22 jholder Exp $   
+/* $Id: text.c,v 1.5 2000/10/10 14:46:22 jholder Exp $
  * --------------------------------------------------------------------
- * see doc/License.txt for License Information   
+ * see doc/License.txt for License Information
  * --------------------------------------------------------------------
- * 
- * File name: $Id: text.c,v 1.5 2000/10/10 14:46:22 jholder Exp $  
- *   
- * Description:    
- *    
- * Modification history:      
+ *
+ * File name: $Id: text.c,v 1.5 2000/10/10 14:46:22 jholder Exp $
+ *
+ * Description:
+ *
+ * Modification history:
  * $Log: text.c,v $
  * Revision 1.5  2000/10/10 14:46:22  jholder
  * Fixed text wrap bug when printing array w/ \r chars in it
@@ -182,8 +182,8 @@ void decode_text( unsigned long *address )
             }
             else
             {
-               /* The use of the synonym and shift codes is the only 
-                * difference between the different versions.  
+               /* The use of the synonym and shift codes is the only
+                * difference between the different versions.
                 */
 
                if ( h_type < V3 )
@@ -544,11 +544,11 @@ zbyte_t translate_to_zscii(int c)
 
    if( c>= 0xa0 )
    {
-      if( h_unicode_table !=0 ) 
+      if( h_unicode_table !=0 )
       {
          fprintf(stderr,"[[ Unicode support not enabled yet. ]]");
       }
-      else 
+      else
       {
          for (i = 0x9b; i <= 0xdf; i++)
          {
@@ -559,7 +559,7 @@ zbyte_t translate_to_zscii(int c)
          }
          return '?';
       }
-   }   
+   }
    return (zbyte_t) c;
 }
 
@@ -577,7 +577,9 @@ void write_char( int c )
    int right_len;
 
 #ifdef EMSCRIPTEN
-   asm("window['jsWriteChar'](%0)" : : "r"(c) );
+   EM_ASM_({
+     window['jsWriteChar']($0);
+   }, c);
 #else
    /* Only do if text formatting is turned on */
 
@@ -619,8 +621,8 @@ void write_char( int c )
                /* Output the buffer and a new line */
                z_new_line(  );
             }
-            
-            if (cp != NULL) 
+
+            if (cp != NULL)
             {
                /* Terminate the line at the last space */
                *cp++ = '\0';
@@ -713,7 +715,9 @@ void z_set_text_style( zword_t mode )
 void write_string( const char *s )
 {
 #ifdef EMSCRIPTEN
-  asm("window['jsPrintString'](%0)" : : "r"(s) );
+  EM_ASM_({
+    window['jsPrintString']($0);
+  }, s);
 #else
    while ( *s )
       write_char( *s++ );
@@ -734,7 +738,7 @@ void flush_buffer( int flag )
 
    /* Send the line buffer to the printer */
    script_string( line );
-   flush_script(  );            
+   flush_script(  );
 
    /* Send the line buffer to the screen */
    output_string( line );
@@ -754,7 +758,7 @@ void flush_buffer( int flag )
  * z_buffer_mode
  *
  * Set the format mode flag. Formatting disables writing into the output buffer.
- * If set to 1, text output in the lower window on stream one is buffered so that 
+ * If set to 1, text output in the lower window on stream one is buffered so that
  * it can be word-wrapped properly.  If set to 0, it isn't.
  *
  */

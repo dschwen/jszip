@@ -1,14 +1,14 @@
 
-/* $Id: unixio.c,v 1.3 2000/10/04 23:06:24 jholder Exp $   
+/* $Id: unixio.c,v 1.3 2000/10/04 23:06:24 jholder Exp $
  * --------------------------------------------------------------------
- * see doc/License.txt for License Information   
+ * see doc/License.txt for License Information
  * --------------------------------------------------------------------
- * 
- * File name: $Id: unixio.c,v 1.3 2000/10/04 23:06:24 jholder Exp $  
- *   
- * Description:    
- *    
- * Modification history:      
+ *
+ * File name: $Id: unixio.c,v 1.3 2000/10/04 23:06:24 jholder Exp $
+ *
+ * Description:
+ *
+ * Modification history:
  * $Log: unixio.c,v $
  * Revision 1.3  2000/10/04 23:06:24  jholder
  * made zscii2latin1 table global
@@ -171,7 +171,9 @@ void initialize_screen(  )
 
    //if ( screen_cols == 0 && ( screen_cols = tgetnum( "co" ) ) == -1 )
    //   screen_cols = DEFAULT_COLS;
-   asm("window['globalvars']['screen_cols']" : "=r"(screen_cols):);
+   EM_ASM_({
+     window['globalvars']['screen_cols'] = $0;
+   }, screen_cols);
 
    //if ( screen_rows == 0 && ( screen_rows = tgetnum( "li" ) ) == -1 )
       screen_rows = DEFAULT_ROWS;
@@ -391,13 +393,13 @@ void delete_status_window(  )
 
 void clear_line(  )
 {
-   EM_ASM( console.log('clear_line()'); );
-///*    tputs (CE, 1, outc);*/
-   int i;
-/*
-   for ( i = 1; i <= screen_cols; i++ )
-      outc( ' ' );
-*/
+  EM_ASM(console.log('clear_line()'););
+  ///*    tputs (CE, 1, outc);*/
+  int i;
+  /*
+     for ( i = 1; i <= screen_cols; i++ )
+        outc( ' ' );
+  */
 }                               /* clear_line */
 
 void clear_text_window(  )
@@ -436,7 +438,9 @@ void clear_status_window(  )
 
 void move_cursor( int row, int col )
 {
-   asm("window['jsMoveCursor'](%0,%1)" : : "r"(row), "r"(col)); 
+  EM_ASM_({
+    "window['jsMoveCursor']($0,$1);
+  }, row, col);
 /*
    tputs( tgoto( CM, col - 1, row - 1 ), 1, outc );
    */
@@ -477,7 +481,9 @@ void restore_cursor_position(  )
 
 void set_attribute( int attribute )
 {
-   asm( "window['jsSetAttribute'](%0,%1,%2,%3,%4)" :: "r"(attribute==NORMAL), "r"(attribute & REVERSE), "r"(attribute & BOLD), "r"(attribute & EMPHASIS), "r"(attribute & FIXED_FONT) );
+  EM_ASM_({
+    window['jsSetAttribute']($0,$1,$2,$3,$4);
+  }, attribute==NORMAL, attribute & REVERSE, attribute & BOLD, attribute & EMPHASIS, attribute & FIXED_FONT);
 #if 0
    static int emph = 0, rev = 0;
 
@@ -529,7 +535,9 @@ void set_attribute( int attribute )
 
 static void display_string( char *s )
 {
-  asm("window['jsPrintString'](%0)" : : "r"(s) );
+  EM_ASM_({
+    window['jsPrintString']($0);
+  }, s);
 }                               /* display_string */
 
 void display_char( int c )
@@ -871,7 +879,9 @@ static int read_key( int mode )
    return ( c );
 
 #else
-   EM_ASM( console.log('read_key()'); );
+   EM_ASM({
+     console.log('read_key()');
+   });
    return 0;
 #endif
 }                               /* read_key */
@@ -1065,25 +1075,25 @@ void set_colours( zword_t foreground, zword_t background )
  * Return 0 if a translation was available, otherwise 1.
  *
  *  International characters (0x9b - 0xa3):
- *                                        
- *  0x9b a umlaut (ae)                    
+ *
+ *  0x9b a umlaut (ae)
  *  0x9c o umlaut (oe)
  *  0x9d u umlaut (ue)
  *  0x9e A umlaut (Ae)
  *  0x9f O umlaut (Oe)
  *  0xa0 U umlaut (Ue)
- *  0xa1 sz (ss)     
+ *  0xa1 sz (ss)
  *  0xa2 open quote (>>)
  *  0xa3 close quota (<<)
- *                      
+ *
  *  Line drawing characters (0xb3 - 0xda):
- *                                       
- *  0xb3 vertical line (|)               
+ *
+ *  0xb3 vertical line (|)
  *  0xba double vertical line (#)
- *  0xc4 horizontal line (-)    
+ *  0xc4 horizontal line (-)
  *  0xcd double horizontal line (=)
  *  all other are corner pieces (+)
- *                                
+ *
  */
 int codes_to_text( int c, char *s )
 {
