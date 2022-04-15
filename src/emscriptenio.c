@@ -439,7 +439,7 @@ void clear_status_window(  )
 void move_cursor( int row, int col )
 {
   EM_ASM_({
-    "window['jsMoveCursor']($0,$1);
+    window['jsMoveCursor']($0,$1);
   }, row, col);
 /*
    tputs( tgoto( CM, col - 1, row - 1 ), 1, outc );

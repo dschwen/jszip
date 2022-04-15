@@ -72,7 +72,8 @@ OBJS =  jzip.bc control.bc extern.bc fileio.bc input.bc interpre.bc license.bc \
 all  : jzip.js
 
 jzip.js : $(OBJS) ztypes.h jzip.h
-	$(CC) -o $@ $(CFLAGS) $(OBJS) $(LIBS) --js-transform ../fixcurl.sh -s EXPORTED_FUNCTIONS="['_spinupJS','_interpret','_cleanupJS','_jsrGetLine','_jsrInputCharacter','_z_restore','_z_print_obj','_load_variable','_jsrResizeWindow','_get_object_address','_read_object']"
+	$(CC) -o $@ $(CFLAGS) $(OBJS) $(LIBS) --js-transform ../fixcurl.sh -s EXPORTED_FUNCTIONS="['_spinupJS','_interpret','_cleanupJS','_jsrGetLine','_jsrInputCharacter','_z_restore','_z_print_obj','_load_variable','_jsrResizeWindow','_get_object_address','_read_object']" -s EXPORTED_RUNTIME_METHODS=getValue,setValue,cwrap
+
 
 jzexe : jzexe.bc jzexe.h
 	$(CC) -o $@ $(CFLAGS) jzexe.o
