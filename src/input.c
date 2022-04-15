@@ -118,9 +118,7 @@ void z_read_char( int argc, zword_t * argv )
 void jsrInputCharacter(int c, int timeout)
 {
   zword_t arg_list[2] = {0,0};
-  EM_ASM_({
-    window['argstore']['a0'] = $0;
-  }, arg_list[0]);
+  arg_list[0] = EM_ASM_({ return window['argstore']['a0']; });
 
   if( c==-1 && z_call( 1, arg_list, ASYNC ) == 0 ) {
     EM_ASM_({
@@ -204,10 +202,8 @@ void jsrZSReadARead(int terminator, char *cbuf) {
   // recover argv and in_size from previous block
   zword_t *argv;
   int in_size;
-  EM_ASM_({
-    window['argstore']['argv'] = $0;
-    window['argstore']['in_size'] = $1;
-  }, argv, in_size);
+  argv = EM_ASM_INT({ return window['argstore']['argv']; });
+  in_size = EM_ASM_INT({ return window['argstore']['in_size']; });
 #endif
    script_line( ( h_type > V4 ) ? &cbuf[2] : &cbuf[1] );
    record_line( ( h_type > V4 ) ? &cbuf[2] : &cbuf[1] );
@@ -329,10 +325,8 @@ int get_line( char *cbuf, zword_t timeout, zword_t action_routine )
 void jsrGetLine(char* cbuf, char* buffer, int read_size, int c, int timeout, int action_routine ) {
   int status = 0;
   zword_t arg_list[2];
-  EM_ASM_({
-    window['argstore']['arg_list'][0] = $0;
-    window['argstore']['arg_list'][1] = $1;
-  }, arg_list[0], arg_list[1]);
+  arg_list[0] = EM_ASM_INT({ return window['argstore']['arg_list'][0]; });
+  arg_list[1] = EM_ASM_INT({ return window['argstore']['arg_list'][1]; });
   if( c == -1 && ( status = z_call( 1, arg_list, ASYNC ) ) == 0 ) {
       /*if ( load_variable( 16 ) != 0 ) {
         z_print_obj( load_variable( 16 ) );

@@ -171,9 +171,7 @@ void initialize_screen(  )
 
    //if ( screen_cols == 0 && ( screen_cols = tgetnum( "co" ) ) == -1 )
    //   screen_cols = DEFAULT_COLS;
-   EM_ASM_({
-     window['globalvars']['screen_cols'] = $0;
-   }, screen_cols);
+   screen_cols = EM_ASM_INT({ return window['globalvars']['screen_cols']; });
 
    //if ( screen_rows == 0 && ( screen_rows = tgetnum( "li" ) ) == -1 )
       screen_rows = DEFAULT_ROWS;
