@@ -79,11 +79,11 @@ JSZip was developed using an early version of emscripten. Fortunately the emscri
 # Fetch the latest registry of available tools.
 ./emsdk update
 
-# Download and install SDK tools version 1.8.2 (from January 2014).
-./emsdk install sdk-1.8.2-64bit
+# Download and install SDK tools (tested with 3.1.8).
+./emsdk install latest
 
-# Make the "1.8.2" SDK "active" for the current user. (writes ~/.emscripten file)
-./emsdk activate emscripten-1.8.2
+# Make the latest SDK "active" for the current user. (writes ~/.emscripten file)
+./emsdk activate latest
 
 # you may need to add the clang location to ~/.emscripten
 echo "LLVM_ROOT='$(pwd)/clang/3.2_64bit/bin/'" >> ~/.emscripten
@@ -92,4 +92,4 @@ echo "LLVM_ROOT='$(pwd)/clang/3.2_64bit/bin/'" >> ~/.emscripten
 source ./emsdk_env.sh
 ```
 
-Now jszip sould build with `make`. You may notice warnings about missing `z` and `termcap` libraries. Just ignore those for now.
+Now jszip sould build with `make`. 
