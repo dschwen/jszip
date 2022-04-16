@@ -1,18 +1,18 @@
-language: cpp
+notifications:
+  email: false
 
-os: osx
+language: node_js
 
-before_script:
-  # install emscripten
-  - wget https://s3.amazonaws.com/mozilla-games/emscripten/releases/emsdk-portable.tar.gz
-  - tar xvzf emsdk-portable.tar.gz
-  - cd emsdk-portable
-  - ./emsdk update
-  - ./emsdk install sdk-1.8.2-64bit
-  - ./emsdk activate emscripten-1.8.2
-  - source ./emsdk_env.sh
-  - cat ~/.emscripten
-  - echo "LLVM_ROOT='$(pwd)/clang/3.2_64bit/bin/'" >> ~/.emscripten
-  - cd ..
+node_js:
+  - node
 
-script: make
+sudo: required
+
+services:
+  - docker
+
+before_install:
+  - docker run -dit --name emscripten -v $(pwd):/src trzeci/emscripten:sdk-incoming-64bit bash
+
+script:
+  - docker exec -it emscripten make
