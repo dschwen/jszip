@@ -92,4 +92,4 @@ echo "LLVM_ROOT='$(pwd)/clang/3.2_64bit/bin/'" >> ~/.emscripten
 source ./emsdk_env.sh
 ```
 
-Now jszip sould build with `make`. 
+Now jszip sould build with `make`, and `make install`  will copy all required files into the `site` directory.
